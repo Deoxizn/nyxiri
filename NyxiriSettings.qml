@@ -49,6 +49,7 @@ PopupCard {
   property var plugins: []
   property bool pluginsLoading: false
   property string lastAction: ""
+  property string pluginProbeError: ""
 
   // ---------------------------------------------------------------- writes
 
@@ -100,6 +101,7 @@ PopupCard {
     try {
       var parsed = JSON.parse(String(text || "[]"))
       plugins = Array.isArray(parsed) ? parsed : []
+      if (plugins.length === 0) lastAction = "Plugin list came back empty"
     } catch (error) {
       plugins = []
       lastAction = "Could not read the plugin list"
@@ -210,10 +212,16 @@ PopupCard {
         waitForEnd: true
         onStreamFinished: popup.parsePlugins(text)
       }
+      stderr: StdioCollector {
+        waitForEnd: true
+        onStreamFinished: popup.pluginProbeError = String(text || "").trim()
+      }
       onExited: function(exitCode) {
+        // Always clear loading: a stuck "Loading…" with an empty list was
+        // indistinguishable from a failed probe.
+        popup.pluginsLoading = false
         if (exitCode !== 0) {
-          popup.pluginsLoading = false
-          popup.lastAction = "omarchy plugin list failed"
+          popup.lastAction = popup.pluginProbeError || "omarchy plugin list failed"
         }
       }
     }
