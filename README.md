@@ -29,20 +29,25 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
 ## Install
 
 ```sh
-git clone https://github.com/Deoxizn/nyxiri.git
-cd nyxiri
-scripts/install.sh            # git clone into ~/.config/omarchy/plugins/devi.nyxiri
+omarchy plugin add https://github.com/Deoxizn/nyxiri.git --enable
+omarchy plugin add https://github.com/Deoxizn/nyxiri-menu.git --enable
 omarchy-shell shell rescanPlugins
 omarchy bar use devi.nyxiri
 ```
 
-The default install is a real git checkout, so `omarchy plugin update`
-works on it. It installs both parts: the bar (`devi.nyxiri`) and the menu
-(`devi.nyxiri-menu`, cloned from its own repo). Pass `--no-menu` for the
-bar only. Live-edit with `scripts/install.sh --link` instead, but note a
+`omarchy plugin add` is the install: it clones a real checkout (so
+`omarchy plugin update` works), validates the manifest, and `--enable`
+switches the plugin on. `scripts/install.sh` in this repo is just a
+wrapper around those two commands (plus `omarchy bar put
+devi.nyxiri-menu` in its Next steps); it removes any existing install
+first, since `plugin add` refuses an already-installed id. Pass
+`--no-menu` to it for the bar only.
+
+Live-edit with `scripts/install.sh --link` instead, but note a
 symlinked install always fails `omarchy plugin update` validation:
-Omarchy's validator refuses symlinks inside a plugin folder. A plain copy
-(`scripts/install.sh --copy`) has no `.git`, so it can't be updated either.
+Omarchy's validator refuses symlinks inside a plugin folder. A plain
+copy (`scripts/install.sh --copy`) has no `.git`, so it can't be
+updated either.
 
 To go back:
 
