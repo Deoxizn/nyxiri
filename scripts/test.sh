@@ -10,7 +10,7 @@ cd -- "$root"
 fail=0
 
 printf '== node tests ==\n'
-node --test tests/ || fail=1
+node --test tests/*.test.js || fail=1
 
 printf '\n== shellcheck ==\n'
 if command -v shellcheck >/dev/null 2>&1; then

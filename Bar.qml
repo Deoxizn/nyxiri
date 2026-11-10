@@ -2166,6 +2166,7 @@ Item {
         }
 
         LeftModules {
+          id: leftModules
           window: barWindow
           pool: horizontalPool
           // NYXIRI-BEGIN nyxiri-screen-pass
@@ -2245,6 +2246,7 @@ Item {
         }
 
         LeftModules {
+          id: leftModules
           window: barWindow
           pool: verticalPool
           // NYXIRI-BEGIN nyxiri-screen-pass
@@ -2256,6 +2258,7 @@ Item {
         }
 
         RightModules {
+          id: rightModules
           window: barWindow
           pool: verticalPool
           // NYXIRI-BEGIN nyxiri-screen-pass
