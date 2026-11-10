@@ -165,40 +165,15 @@ PopupCard {
   onTabChanged: if (tab === "widgets" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
 
   // PopupCard does not consume keys, so Escape is scoped to the card while it
-  // is open. The close button remains the pointer path.
-  Shortcut {
-    sequence: "Escape"
-    enabled: popup.open
-    onActivated: popup.close()
-  }
-
+  // is open. The close button remains the pointer path. NOTE: Shortcut (and
+  // Process) must NOT be direct children of PopupCard: its default property
+  // is the visual contentItem list, and a QQuickShortcut there fails the
+  // whole file ("Cannot assign object of type QQuickShortcut to list
+  // property contentItem"), which makes NyxiriSettings unavailable and the
+  // bar falls back to omarchy.bar. They live inside the content Column
+  // below instead, where Item.data accepts non-visual children.
   contentWidth: fittedContentWidth(Style.space(440))
   contentHeight: fittedContentHeight(column.implicitHeight, Style.space(620))
-
-  Process {
-    id: pluginProbe
-    command: ["omarchy", "plugin", "list", "--json"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: popup.parsePlugins(text)
-    }
-    onExited: function(exitCode) {
-      if (exitCode !== 0) {
-        popup.pluginsLoading = false
-        popup.lastAction = "omarchy plugin list failed"
-      }
-    }
-  }
-
-  Process {
-    id: pluginAction
-    stdout: StdioCollector { waitForEnd: true }
-    stderr: StdioCollector { waitForEnd: true }
-    onExited: function(exitCode) {
-      if (exitCode !== 0) popup.lastAction = "Command failed"
-      popup.refreshPlugins()
-    }
-  }
 
   component SectionLabel: Text {
     color: Qt.darker(popup.bar.foreground, 1.35)
@@ -221,6 +196,37 @@ PopupCard {
     id: column
     width: parent.width
     spacing: Style.spacing.md
+
+    Shortcut {
+      sequence: "Escape"
+      enabled: popup.open
+      onActivated: popup.close()
+    }
+
+    Process {
+      id: pluginProbe
+      command: ["omarchy", "plugin", "list", "--json"]
+      stdout: StdioCollector {
+        waitForEnd: true
+        onStreamFinished: popup.parsePlugins(text)
+      }
+      onExited: function(exitCode) {
+        if (exitCode !== 0) {
+          popup.pluginsLoading = false
+          popup.lastAction = "omarchy plugin list failed"
+        }
+      }
+    }
+
+    Process {
+      id: pluginAction
+      stdout: StdioCollector { waitForEnd: true }
+      stderr: StdioCollector { waitForEnd: true }
+      onExited: function(exitCode) {
+        if (exitCode !== 0) popup.lastAction = "Command failed"
+        popup.refreshPlugins()
+      }
+    }
 
     Row {
       width: parent.width
