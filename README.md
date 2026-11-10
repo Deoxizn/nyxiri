@@ -37,7 +37,9 @@ omarchy bar use devi.nyxiri
 ```
 
 The default install is a real git checkout, so `omarchy plugin update`
-works on it. Live-edit with `scripts/install.sh --link` instead, but note a
+works on it. It installs both parts: the bar (`devi.nyxiri`) and the menu
+(`devi.nyxiri-menu`, cloned from its own repo). Pass `--no-menu` for the
+bar only. Live-edit with `scripts/install.sh --link` instead, but note a
 symlinked install always fails `omarchy plugin update` validation:
 Omarchy's validator refuses symlinks inside a plugin folder. A plain copy
 (`scripts/install.sh --copy`) has no `.git`, so it can't be updated either.
