@@ -52,6 +52,19 @@ test("the settings card is a PopupCard and does not redeclare bar", () => {
   assert.doesNotMatch(settings, /required property var bar/)
 })
 
+test("the settings card has a bar-surface opacity slider and a registry fallback for the plugin probe", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /surfaceOpacity/)
+  assert.match(settings, /pluginsFromRegistry/)
+  assert.match(settings, /probeWatchdog/)
+  assert.match(settings, /useRegistryPlugins/)
+})
+
+test("the bar background honors the surface opacity setting", () => {
+  const bar = read("Bar.qml")
+  assert.match(bar, /nyxiri\.pill\.surfaceOpacity/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)

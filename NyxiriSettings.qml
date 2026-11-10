@@ -98,19 +98,68 @@ PopupCard {
 
   function parsePlugins(text) {
     pluginsLoading = false
+    probeWatchdog.running = false
     try {
       var parsed = JSON.parse(String(text || "[]"))
       plugins = Array.isArray(parsed) ? parsed : []
-      if (plugins.length === 0) lastAction = "Plugin list came back empty"
+      if (plugins.length === 0) {
+        // The probe came back empty (or never found `omarchy`): fall back to
+        // the widgets the bar itself has registered, so the tab is never a
+        // blank wall when the bar plainly has widgets on it.
+        var fallback = pluginsFromRegistry()
+        if (fallback.length > 0) {
+          plugins = fallback
+          lastAction = "Plugin probe came back empty — showing widgets from the bar"
+        } else {
+          lastAction = "Plugin list came back empty"
+        }
+      }
     } catch (error) {
       plugins = []
       lastAction = "Could not read the plugin list"
     }
   }
 
+  // Widgets the bar has registered, as plugin-shaped rows. The registry only
+  // holds enabled widgets, so enabled/canDisable are fixed; the toggle uses
+  // pluginId (the plugin) while Add to bar and inBar use id (the widget).
+  function pluginsFromRegistry() {
+    var out = []
+    var widgets = bar && bar.barWidgetRegistry && bar.barWidgetRegistry.widgets
+      ? bar.barWidgetRegistry.widgets : null
+    if (!widgets) return out
+    for (var key in widgets) {
+      var entry = widgets[key]
+      if (!entry) continue
+      var meta = entry.metadata || {}
+      out.push({
+        id: String(key),
+        pluginId: String(meta.pluginId || key),
+        name: String(meta.displayName || key),
+        kinds: ["bar-widget"],
+        enabled: true,
+        canDisable: true,
+        firstParty: meta.firstParty === true
+      })
+    }
+    out.sort(function(a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0 })
+    return out
+  }
+
+  function useRegistryPlugins(note) {
+    var fallback = pluginsFromRegistry()
+    if (fallback.length > 0) {
+      plugins = fallback
+      lastAction = note
+      return true
+    }
+    return false
+  }
+
   function refreshPlugins() {
     pluginsLoading = true
     pluginProbe.running = true
+    probeWatchdog.restart()
   }
 
   function runPluginAction(args, note) {
@@ -136,9 +185,11 @@ PopupCard {
   }
 
   function setEnabled(plugin, enabled) {
-    if (!plugin || !plugin.id || plugin.canDisable === false) return
-    runPluginAction(enabled ? ["plugin", "enable", plugin.id] : ["plugin", "disable", plugin.id],
-      (enabled ? "Enabled " : "Disabled ") + plugin.id)
+    if (!plugin || plugin.canDisable === false) return
+    var pid = String(plugin.pluginId || plugin.id || "")
+    if (!pid) return
+    runPluginAction(enabled ? ["plugin", "enable", pid] : ["plugin", "disable", pid],
+      (enabled ? "Enabled " : "Disabled ") + pid)
   }
 
   function addToBar(plugin) {
@@ -220,8 +271,28 @@ PopupCard {
         // Always clear loading: a stuck "Loading…" with an empty list was
         // indistinguishable from a failed probe.
         popup.pluginsLoading = false
+        popup.probeWatchdog.running = false
         if (exitCode !== 0) {
-          popup.lastAction = popup.pluginProbeError || "omarchy plugin list failed"
+          var note = popup.pluginProbeError || "omarchy plugin list failed"
+          if (popup.plugins.length === 0
+            && !popup.useRegistryPlugins(note + " — showing widgets from the bar")) {
+            popup.lastAction = note
+          }
+        }
+      }
+    }
+
+    // If the probe never answers at all (spawn failure fires no onExited),
+    // stop waiting and show what the bar itself knows instead of a stuck
+    // "Loading…" and an empty tab.
+    Timer {
+      id: probeWatchdog
+      interval: 8000
+      onTriggered: {
+        if (!popup.pluginsLoading) return
+        popup.pluginsLoading = false
+        if (!popup.useRegistryPlugins("Plugin probe timed out — showing widgets from the bar")) {
+          popup.lastAction = "Plugin probe timed out and the bar reports no widgets"
         }
       }
     }
@@ -411,6 +482,28 @@ PopupCard {
               foreground: popup.bar.foreground
               fontFamily: popup.bar.fontFamily
               onChanged: function(value) { popup.setPill({ surface: value }) }
+            }
+
+            Row {
+              width: body.width
+              spacing: Style.spacing.sm
+              enabled: popup.pill.surface !== "clear"
+              BodyText { text: "Background"; width: Style.space(76) }
+              PanelSlider {
+                width: parent.width - Style.space(76) - surfaceValue.width - parent.spacing * 2
+                bar: popup.bar
+                value: popup.pill.surfaceOpacity
+                minimum: 0
+                maximum: 1
+                step: 0.05
+                onReleased: function(value) { popup.setPill({ surfaceOpacity: value }) }
+              }
+              BodyText {
+                id: surfaceValue
+                text: Math.round(popup.pill.surfaceOpacity * 100) + "%"
+                width: Style.space(40)
+                horizontalAlignment: Text.AlignRight
+              }
             }
 
             SectionLabel { text: "SHAPE" }

@@ -60,7 +60,8 @@ function defaults() {
       padding: 6,
       inset: 2,
       miniGap: 2,
-      surface: "theme"
+      surface: "theme",
+      surfaceOpacity: 1
     },
     monitors: {}
   }
@@ -130,6 +131,7 @@ function normalize(raw) {
     out.pill.inset = Math.round(numberIn(pill.inset, out.pill.inset, 0, 16))
     out.pill.miniGap = Math.round(numberIn(pill.miniGap, out.pill.miniGap, 0, 16))
     out.pill.surface = stringIn(pill.surface, SURFACES, out.pill.surface)
+    out.pill.surfaceOpacity = numberIn(pill.surfaceOpacity, out.pill.surfaceOpacity, 0, 1)
   }
 
   if (isPlainObject(raw.monitors)) {

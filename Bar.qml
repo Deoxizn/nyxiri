@@ -1998,7 +1998,7 @@ Item {
       // NYXIRI-BEGIN nyxiri-clear-surface
       Rectangle {
         anchors.fill: parent
-        color: (root.transparent || root.nyxiriClearSurface) ? "transparent" : (root.glassy ? root.glassBackground : root.background)
+        color: (root.transparent || root.nyxiriClearSurface) ? "transparent" : Util.alpha(root.glassy ? root.glassBackground : root.background, root.nyxiri.pill.surfaceOpacity)
       }
       // NYXIRI-END nyxiri-clear-surface
 
