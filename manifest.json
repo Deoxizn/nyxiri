@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "devi.nyxiri",
+  "name": "Nyxiri",
+  "version": "0.1.0",
+  "author": "Deoxizn",
+  "description": "Per-section island and mini pills, per-monitor layout rules, and palette-driven colours for the Omarchy bar",
+  "kinds": [
+    "bar"
+  ],
+  "entryPoints": {
+    "bar": "Bar.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.bar"
+  }
+}

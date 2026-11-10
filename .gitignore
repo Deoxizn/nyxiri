@@ -1,0 +1,6 @@
+*.rebase
+*.orig
+node_modules/
+*.qmlc
+*.jsc
+.qmllint.ini

@@ -1,0 +1,9 @@
+{
+  "name": "nyxiri",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nyxiri bar plugin for the Omarchy shell",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
