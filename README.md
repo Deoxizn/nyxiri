@@ -31,12 +31,18 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
 ```sh
 git clone https://github.com/Deoxizn/nyxiri.git
 cd nyxiri
-scripts/install.sh            # symlink into ~/.config/omarchy/plugins/devi.nyxiri
+scripts/install.sh            # git clone into ~/.config/omarchy/plugins/devi.nyxiri
 omarchy-shell shell rescanPlugins
 omarchy bar use devi.nyxiri
 ```
 
-Copy instead of symlink with `scripts/install.sh --copy`. To go back:
+The default install is a real git checkout, so `omarchy plugin update`
+works on it. Live-edit with `scripts/install.sh --link` instead, but note a
+symlinked install always fails `omarchy plugin update` validation:
+Omarchy's validator refuses symlinks inside a plugin folder. A plain copy
+(`scripts/install.sh --copy`) has no `.git`, so it can't be updated either.
+
+To go back:
 
 ```sh
 omarchy bar reset

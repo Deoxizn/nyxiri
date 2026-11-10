@@ -53,13 +53,13 @@ Item {
     return Nyxiri.filterKeys(nyxiri, screenName, keys)
   }
   // The menu fork's trigger settings live in its own bar layout entry. The
-  // card can edit them only when devi.menu is actually on the bar. Entries are
+  // card can edit them only when devi.nyxiri-menu is actually on the bar. Entries are
   // keyed `id#serial`; the value is either a settings object or a bare id, so
   // the key (not the value) decides which entry this is.
   function nyxiriMenuEntryKey() {
     var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
     for (var key in entries) {
-      if (Nyxiri.baseWidgetId(key) === "devi.menu") return String(key)
+      if (Nyxiri.baseWidgetId(key) === "devi.nyxiri-menu") return String(key)
     }
     return ""
   }
@@ -860,7 +860,7 @@ Item {
     })
   }
 
-  // Replace devi.menu's inline settings with the current entry plus `patch`.
+  // Replace devi.nyxiri-menu's inline settings with the current entry plus `patch`.
   // updateEntryInline replaces rather than merges, so the existing values are
   // copied first. A bare-id entry has no settings to keep.
   function writeMenuSettings(patch) {
@@ -873,7 +873,7 @@ Item {
       for (var name in entry) if (name !== "id") next[name] = entry[name]
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
-    return shell.updateEntryInline("devi.menu", next)
+    return shell.updateEntryInline("devi.nyxiri-menu", next)
   }
   // NYXIRI-END nyxiri-write
 
