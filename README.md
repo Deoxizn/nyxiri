@@ -89,7 +89,8 @@ are picked up on the next shell reload.
         "padding": 6,             // along-bar space around an island
         "inset": 2,               // across-bar space around a pill
         "miniGap": 2,             // gap between a mini pill and its neighbours
-        "surface": "theme"        // theme | clear
+        "surface": "theme",       // theme | clear
+        "surfaceOpacity": 1       // bar background opacity, off when surface is Clear
       },
       "monitors": {
         "DP-1": {
@@ -149,7 +150,8 @@ omarchy-shell devi.nyxiri closeSettings
 The card is a `PopupCard` centered under the bar. Its tabs are:
 
 - **Appearance** — section modes, colour role, custom hex, fill/border
-  opacity, border width, island padding, bar surface.
+  opacity, border width, island padding, bar surface and bar background
+  opacity.
 - **Monitors** — per-monitor bar toggle and widget rules.
 - **Workspaces** — mode, marker style and hide-empty for the Nyxiri
   workspaces widget, shown while that widget is on the bar.
@@ -160,15 +162,15 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
 ## Menu integration
 
 The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a
-**Nyxiri** entry to the Omarchy menu and calls `openSettings` over IPC. It is
-optional; Nyxiri works without it.
+**Nyxiri** entry to the Omarchy menu, under **Appearance**, and calls
+`openSettings` over IPC. It is optional; Nyxiri works without it.
 
 ## Workspaces widget
 
 The separate [nyxiri-workspaces](https://github.com/Deoxizn/nyxiri-workspaces)
 plugin replaces the stock workspaces widget with one the bar can style:
-marker styles (numbers, kanji, Pac-Man/ghost, dots), a Ten / Five / Active
-only mode, and hide-empty. Its settings live on the widget's own layout
+seven marker styles (numbers, kanji, Pac-Man/ghost, dots, magic, default,
+aurora), a Ten / Five / Active only mode, and hide-empty. Its settings live on the widget's own layout
 entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
 tab edits them while the widget is on the bar. It is optional; Nyxiri
 works with the stock workspaces widget too.
