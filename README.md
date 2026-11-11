@@ -31,17 +31,23 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
 ```sh
 omarchy plugin add https://github.com/Deoxizn/nyxiri.git --enable
 omarchy plugin add https://github.com/Deoxizn/nyxiri-menu.git --enable
+omarchy plugin add https://github.com/Deoxizn/nyxiri-workspaces.git --enable
 omarchy-shell shell rescanPlugins
 omarchy bar use devi.nyxiri
+omarchy bar put devi.nyxiri-workspaces
 ```
+
+The workspaces widget is optional: put it where the old workspaces widget
+was and remove that one from the bar.
 
 `omarchy plugin add` is the install: it clones a real checkout (so
 `omarchy plugin update` works), validates the manifest, and `--enable`
 switches the plugin on. `scripts/install.sh` in this repo is just a
-wrapper around those two commands (plus `omarchy bar put
+wrapper around the bar and menu commands (plus `omarchy bar put
 devi.nyxiri-menu` in its Next steps); it removes any existing install
-first, since `plugin add` refuses an already-installed id. Pass
-`--no-menu` to it for the bar only.
+first, since `plugin add` refuses an already-installed id. It does not
+install the workspaces widget; that is a separate `plugin add` above.
+Pass `--no-menu` to it for the bar only.
 
 Live-edit with `scripts/install.sh --link` instead, but note a
 symlinked install always fails `omarchy plugin update` validation:
@@ -145,6 +151,8 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
 - **Appearance** — section modes, colour role, custom hex, fill/border
   opacity, border width, island padding, bar surface.
 - **Monitors** — per-monitor bar toggle and widget rules.
+- **Workspaces** — mode, marker style and hide-empty for the Nyxiri
+  workspaces widget, shown while that widget is on the bar.
 - **Widgets** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
   the official `omarchy` CLI, so behaviour matches the menu.
@@ -154,6 +162,16 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
 The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a
 **Nyxiri** entry to the Omarchy menu and calls `openSettings` over IPC. It is
 optional; Nyxiri works without it.
+
+## Workspaces widget
+
+The separate [nyxiri-workspaces](https://github.com/Deoxizn/nyxiri-workspaces)
+plugin replaces the stock workspaces widget with one the bar can style:
+marker styles (numbers, kanji, Pac-Man/ghost, dots), a Ten / Five / Active
+only mode, and hide-empty. Its settings live on the widget's own layout
+entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
+tab edits them while the widget is on the bar. It is optional; Nyxiri
+works with the stock workspaces widget too.
 
 ## How it works
 
@@ -196,7 +214,6 @@ palette parsing and colour resolution.
   the one already open (the bar only tracks one popout at a time).
 - Widget enabling uses `omarchy plugin`, so it affects the whole session, not
   one monitor. Per-monitor visibility is the rule list, not plugin enablement.
-- Custom workspace icons are not part of this version.
 - `omarchy-shell` IPC requires the bar to be loaded; if Nyxiri failed to load,
   the stock bar is active and the IPC target is unavailable.
 
