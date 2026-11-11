@@ -123,20 +123,6 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   assert.doesNotMatch(settings, /setWorkspaces\(\{ style: value \}\)/)
 })
 
-test("the bar shadows every widget's text and icons, behind a setting", () => {
-  const bar = read("Bar.qml")
-  assert.match(bar, /layer\.enabled: root\.nyxiri\.pill\.textShadow/)
-  assert.match(bar, /layer\.effect: MultiEffect \{/)
-  assert.match(bar, /shadowEnabled: true/)
-  assert.match(bar, /shadowColor: Qt\.rgba\(0, 0, 0, 0\.7\)/)
-  assert.match(bar, /shadowBlur: 0\.08/)
-  assert.match(bar, /shadowVerticalOffset: 0/)
-  const settings = read("NyxiriSettings.qml")
-  assert.match(settings, /text: "TEXT"/)
-  assert.match(settings, /popup\.pill\.textShadow !== false/)
-  assert.match(settings, /setPill\(\{ textShadow: !checked \}\)/)
-})
-
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)

@@ -11,14 +11,13 @@ test("defaults cover every section and pill key", () => {
   assert.equal(config.pill.color, "accent")
   assert.equal(config.pill.surface, "theme")
   assert.equal(config.pill.surfaceOpacity, 1)
-  assert.equal(config.pill.textShadow, true)
   assert.deepEqual(config.monitors, {})
 })
 
 test("normalize fills defaults and clamps numbers", () => {
   const config = Nyxiri.normalize({
     sections: { left: "mini", center: "nope" },
-    pill: { fillOpacity: 2, borderOpacity: -1, borderWidth: 99, radius: -4, color: "  red  ", surfaceOpacity: 2, textShadow: false },
+    pill: { fillOpacity: 2, borderOpacity: -1, borderWidth: 99, radius: -4, color: "  red  ", surfaceOpacity: 2 },
     monitors: { "DP-1": { enabled: false, widgets: { mode: "only", list: [" clock ", "clock", 3] } } }
   })
   assert.equal(config.sections.left, "mini")
@@ -26,7 +25,6 @@ test("normalize fills defaults and clamps numbers", () => {
   assert.equal(config.pill.fillOpacity, 1)
   assert.equal(config.pill.borderOpacity, 0)
   assert.equal(config.pill.surfaceOpacity, 1)
-  assert.equal(config.pill.textShadow, false)
   assert.equal(config.pill.borderWidth, 6)
   assert.equal(config.pill.radius, 0)
   assert.equal(config.pill.color, "red")

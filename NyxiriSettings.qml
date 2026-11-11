@@ -535,17 +535,6 @@ PopupCard {
               }
             }
 
-            SectionLabel { text: "TEXT" }
-
-            Toggle {
-              width: body.width
-              label: "Text shadow"
-              description: "Soft shadow under bar text and icons so it reads over any wallpaper"
-              checked: popup.pill.textShadow !== false
-              foreground: popup.bar.foreground
-              onClicked: popup.setPill({ textShadow: !checked })
-            }
-
             SectionLabel { text: "SHAPE" }
 
             // "Pill opacity" is the Fill level itself, so 100% means a
