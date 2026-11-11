@@ -3378,17 +3378,20 @@ Item {
         width: slot.widgetWidth
         height: slot.widgetHeight
 
-        // A soft shadow under every widget's text and icons, so white on a
-        // transparent pill still reads over any wallpaper. The layer covers
-        // the widget itself, never the pill behind it, and one shadow for
-        // the whole widget beats forking every plugin to shadow its own text.
+        // A tight dark halo around every widget's text and icons, so white
+        // on a transparent pill still reads over any wallpaper. It is an
+        // outline, not a drop shadow: the shadow sits centered (no offset)
+        // with only a small blur, so it fringes each glyph instead of
+        // smudging the whole line darker. The layer covers the widget
+        // itself, never the pill behind it, and one halo for the whole
+        // widget beats forking every plugin to outline its own text.
         layer.enabled: root.nyxiri.pill.textShadow
         layer.effect: MultiEffect {
           shadowEnabled: true
-          shadowColor: Qt.rgba(0, 0, 0, 0.6)
-          shadowBlur: 0.3
+          shadowColor: Qt.rgba(0, 0, 0, 0.7)
+          shadowBlur: 0.08
           shadowHorizontalOffset: 0
-          shadowVerticalOffset: 1
+          shadowVerticalOffset: 0
         }
       }
 
