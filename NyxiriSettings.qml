@@ -379,6 +379,7 @@ PopupCard {
         model: [
           { value: "appearance", label: "Appearance" },
           { value: "monitors", label: "Monitors" },
+          { value: "workspaces", label: "Workspaces" },
           { value: "widgets", label: "Widgets" }
         ]
 
@@ -728,13 +729,17 @@ PopupCard {
               foreground: popup.bar.foreground
               onClicked: popup.setMenu({ hoverOpen: !checked })
             }
+          }
 
-            // The workspaces widget's settings live in its own layout entry;
-            // only offer these controls when it is actually on the bar.
-            SectionLabel {
-              visible: popup.bar.nyxiriWorkspacesAvailable
-              text: "WORKSPACES"
-            }
+          // ----------------------------------------------------- workspaces
+          // The workspaces widget's settings live in its own layout entry;
+          // only offer these controls when it is actually on the bar.
+          Column {
+            visible: popup.tab === "workspaces"
+            width: parent.width
+            spacing: Style.spacing.sm
+
+            SectionLabel { text: "WORKSPACES" }
 
             Dropdown {
               visible: popup.bar.nyxiriWorkspacesAvailable
@@ -751,6 +756,22 @@ PopupCard {
               onChanged: function(value) { popup.setWorkspaces({ mode: value }) }
             }
 
+            Dropdown {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              label: "Style"
+              value: popup.workspacesSetting("style", "numbers")
+              options: [
+                { value: "numbers", label: "Numbers" },
+                { value: "kanji", label: "Kanji" },
+                { value: "pacman", label: "Pac-Man" },
+                { value: "dots", label: "Dots" }
+              ]
+              foreground: popup.bar.foreground
+              fontFamily: popup.bar.fontFamily
+              onChanged: function(value) { popup.setWorkspaces({ style: value }) }
+            }
+
             Toggle {
               visible: popup.bar.nyxiriWorkspacesAvailable
               width: body.width
@@ -759,6 +780,14 @@ PopupCard {
               checked: popup.workspacesSetting("hideEmpty", false) === true
               foreground: popup.bar.foreground
               onClicked: popup.setWorkspaces({ hideEmpty: !checked })
+            }
+
+            BodyText {
+              visible: !popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              text: "Add the Nyxiri workspaces widget to the bar to change these."
+              color: Qt.darker(popup.bar.foreground, 1.35)
+              font.pixelSize: Style.font.caption
             }
           }
 

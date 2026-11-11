@@ -108,6 +108,17 @@ test("the settings card offers workspaces mode and hide-empty controls", () => {
   assert.match(settings, /popup\.bar\.nyxiriWorkspacesAvailable/)
 })
 
+test("the settings card has a workspaces tab with a marker style picker", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /\{ value: "workspaces", label: "Workspaces" \}/)
+  assert.match(settings, /visible: popup\.tab === "workspaces"/)
+  assert.match(settings, /workspacesSetting\("style", "numbers"\)/)
+  assert.match(settings, /value: "kanji", label: "Kanji"/)
+  assert.match(settings, /value: "pacman", label: "Pac-Man"/)
+  assert.match(settings, /value: "dots", label: "Dots"/)
+  assert.match(settings, /setWorkspaces\(\{ style: value \}\)/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)
