@@ -2531,14 +2531,11 @@ Item {
     property color pillColor: root.nyxiriPillColor
     property real fillOpacity: root.nyxiri.pill.fillOpacity
     property real borderOpacity: root.nyxiri.pill.borderOpacity
-    // Master fade for the whole pill (fill and border together); Fill and
-    // Border below still set their own levels underneath it.
-    property real masterOpacity: root.nyxiri.pill.opacity
     property int borderWidth: root.nyxiri.pill.borderWidth
     property real cornerRadius: root.nyxiri.pill.radius
 
-    color: Util.alpha(pillColor, fillOpacity * masterOpacity)
-    borderSpec: Border.flat(Util.alpha(pillColor, borderOpacity * masterOpacity), borderWidth)
+    color: Util.alpha(pillColor, fillOpacity)
+    borderSpec: Border.flat(Util.alpha(pillColor, borderOpacity), borderWidth)
     radius: cornerRadius >= 999
       ? Math.max(0, Math.min(width, height) / 2)
       : Math.max(0, Math.min(cornerRadius, Math.min(width, height) / 2))

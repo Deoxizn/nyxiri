@@ -528,31 +528,13 @@ PopupCard {
 
             SectionLabel { text: "SHAPE" }
 
+            // "Pill opacity" is the Fill level itself, so 100% means a
+            // solid pill. A separate master fade once multiplied it, which
+            // is why 100% still looked see-through; the master is gone.
             Row {
               width: body.width
               spacing: Style.spacing.sm
               BodyText { text: "Pill opacity"; width: Style.space(76) }
-              PanelSlider {
-                width: parent.width - Style.space(76) - pillOpacityValue.width - parent.spacing * 2
-                bar: popup.bar
-                value: popup.pill.opacity
-                minimum: 0
-                maximum: 1
-                step: 0.05
-                onReleased: function(value) { popup.setPill({ opacity: value }) }
-              }
-              BodyText {
-                id: pillOpacityValue
-                text: Math.round(popup.pill.opacity * 100) + "%"
-                width: Style.space(40)
-                horizontalAlignment: Text.AlignRight
-              }
-            }
-
-            Row {
-              width: body.width
-              spacing: Style.spacing.sm
-              BodyText { text: "Fill"; width: Style.space(76) }
               PanelSlider {
                 id: fillSlider
                 width: parent.width - Style.space(76) - valueText.width - parent.spacing * 2
