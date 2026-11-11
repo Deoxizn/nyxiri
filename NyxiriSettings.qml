@@ -51,6 +51,31 @@ PopupCard {
   property string lastAction: ""
   property string pluginProbeError: ""
 
+  // Active plugins first, then disabled, each group alphabetical by name.
+  // The probe returns install order, which buries the enabled ones at the
+  // bottom of a long list. Re-sorted on every probe refresh (every toggle
+  // re-runs the probe, so a flipped row moves to its new group).
+  readonly property var sortedPlugins: {
+    var list = popup.plugins.slice()
+    list.sort(function(a, b) {
+      var ae = a.enabled === true ? 0 : 1
+      var be = b.enabled === true ? 0 : 1
+      if (ae !== be) return ae - be
+      var an = String(a.name || a.id || "").toLowerCase()
+      var bn = String(b.name || b.id || "").toLowerCase()
+      return an < bn ? -1 : an > bn ? 1 : 0
+    })
+    return list
+  }
+
+  readonly property int activePlugins: {
+    var n = 0
+    for (var i = 0; i < popup.plugins.length; i++) {
+      if (popup.plugins[i].enabled === true) n++
+    }
+    return n
+  }
+
   // ---------------------------------------------------------------- writes
 
   function setSection(section, mode) {
@@ -1005,13 +1030,13 @@ PopupCard {
             BodyText {
               visible: popup.plugins.length > 0
               width: body.width
-              text: popup.plugins.length + " plugins"
+              text: popup.plugins.length + " plugins · " + popup.activePlugins + " active"
               color: Qt.darker(popup.bar.foreground, 1.45)
               font.pixelSize: Style.font.caption
             }
 
             Repeater {
-              model: popup.plugins
+              model: popup.sortedPlugins
 
               delegate: Column {
                 id: pluginRow

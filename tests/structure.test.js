@@ -97,7 +97,15 @@ test("the widgets tab shows a row for every plugin even when kinds are unknown",
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /rowShown/)
   assert.match(settings, /kindList\(pluginRow\.modelData\)\.length === 0/)
-  assert.match(settings, /plugins\.length \+ " plugins"/)
+  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
+})
+
+test("the widgets tab sorts active plugins first, then disabled, each alphabetical", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /readonly property var sortedPlugins/)
+  assert.match(settings, /model: popup\.sortedPlugins/)
+  assert.match(settings, /var ae = a\.enabled === true \? 0 : 1/)
+  assert.match(settings, /String\(a\.name \|\| a\.id \|\| ""\)\.toLowerCase\(\)/)
 })
 
 test("the bar exposes the workspaces widget's settings like the menu's", () => {

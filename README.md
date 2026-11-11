@@ -174,7 +174,9 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
   workspaces widget, shown while that widget is on the bar.
 - **Widgets** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
-  the official `omarchy` CLI, so behaviour matches the menu.
+  the official `omarchy` CLI, so behaviour matches the menu. The list sorts
+  active plugins first, then disabled, each group alphabetical, and the
+  header counts both (`52 plugins · 18 active`).
 
 A tab whose content is taller than the card shows a scrollbar on the right
 edge (Widgets, and Appearance or Monitors on a short screen); drag it or
