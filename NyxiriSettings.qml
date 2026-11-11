@@ -899,6 +899,14 @@ PopupCard {
               elide: Text.ElideRight
             }
 
+            BodyText {
+              visible: popup.plugins.length > 0
+              width: body.width
+              text: popup.plugins.length + " plugins"
+              color: Qt.darker(popup.bar.foreground, 1.45)
+              font.pixelSize: Style.font.caption
+            }
+
             Repeater {
               model: popup.plugins
 
@@ -906,6 +914,13 @@ PopupCard {
                 id: pluginRow
                 required property var modelData
                 readonly property bool listed: popup.inBar(modelData)
+                // Entries whose kinds are missing or unrecognised still get
+                // a row: the tab once showed nothing at all while the list
+                // was provably non-empty, because every row hid behind a
+                // kinds check. A plugin row is always useful (name, toggle);
+                // only "Add to bar" stays widget-gated.
+                readonly property bool rowShown: popup.isBarWidget(pluginRow.modelData)
+                  || popup.kindList(pluginRow.modelData).length === 0
 
                 width: body.width
                 spacing: Style.spacing.xxs
@@ -913,7 +928,7 @@ PopupCard {
                 Row {
                   width: parent.width
                   spacing: Style.spacing.sm
-                  visible: popup.isBarWidget(pluginRow.modelData)
+                  visible: pluginRow.rowShown
 
                   Column {
                     width: parent.width - pluginToggle.width - parent.spacing
@@ -947,7 +962,7 @@ PopupCard {
                 Row {
                   width: parent.width
                   spacing: Style.spacing.xs
-                  visible: popup.isBarWidget(pluginRow.modelData) && pluginRow.modelData.enabled === true && !pluginRow.listed
+                  visible: pluginRow.rowShown && pluginRow.modelData.enabled === true && !pluginRow.listed
 
                   Button {
                     text: "Add to bar"

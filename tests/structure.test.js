@@ -79,6 +79,13 @@ test("the settings card forces keyboard focus into its text fields on click", ()
   assert.doesNotMatch(settings, /            TextField \{/)
 })
 
+test("the widgets tab shows a row for every plugin even when kinds are unknown", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /rowShown/)
+  assert.match(settings, /kindList\(pluginRow\.modelData\)\.length === 0/)
+  assert.match(settings, /plugins\.length \+ " plugins"/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)
