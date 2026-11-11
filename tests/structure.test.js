@@ -72,6 +72,13 @@ test("the pill fades fill and border together with the master opacity", () => {
   assert.match(bar, /borderOpacity \* masterOpacity/)
 })
 
+test("the settings card forces keyboard focus into its text fields on click", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /component FocusField: TextField/)
+  assert.match(settings, /forceActiveFocus/)
+  assert.doesNotMatch(settings, /            TextField \{/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)

@@ -245,6 +245,23 @@ PopupCard {
     verticalAlignment: Text.AlignVCenter
   }
 
+  // Text input in a popup does not take keyboard focus on click by itself:
+  // the click selects text but no cursor appears and keys go nowhere, which
+  // is exactly what the wordmark field did. Stock panels force focus
+  // explicitly (weather Panel startEditingLocation, polkit passwordInput),
+  // so this one does the same on press, and lets the press through so
+  // cursor placement and selection keep working.
+  component FocusField: TextField {
+    MouseArea {
+      anchors.fill: parent
+      acceptedButtons: Qt.LeftButton
+      onPressed: function(mouse) {
+        mouse.accepted = false
+        parent.forceActiveFocus()
+      }
+    }
+  }
+
   Column {
     id: column
     width: parent.width
@@ -456,7 +473,7 @@ PopupCard {
               }
             }
 
-            TextField {
+            FocusField {
               visible: popup.pill.color === "custom"
               width: body.width
               text: popup.pill.customColor
@@ -653,7 +670,7 @@ PopupCard {
               onChanged: function(value) { popup.setMenu({ glyph: value }) }
             }
 
-            TextField {
+            FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
                 && popup.menuSetting("glyph", "omarchy") === "custom"
               width: body.width
@@ -665,7 +682,7 @@ PopupCard {
               onEditingFinished: popup.setMenu({ customGlyph: text })
             }
 
-            TextField {
+            FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
                 && popup.menuSetting("glyph", "omarchy") === "custom"
               width: body.width
@@ -677,7 +694,7 @@ PopupCard {
               onEditingFinished: popup.setMenu({ iconFont: text })
             }
 
-            TextField {
+            FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
               width: body.width
               text: popup.menuSetting("iconSource", "")
@@ -688,7 +705,7 @@ PopupCard {
               onEditingFinished: popup.setMenu({ iconSource: text })
             }
 
-            TextField {
+            FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
               width: body.width
               text: popup.menuSetting("wordmark", "Nyxiri")
