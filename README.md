@@ -159,6 +159,10 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
   option as the active bar, or reset to the built-in bar. These actions run
   the official `omarchy` CLI, so behaviour matches the menu.
 
+A tab whose content is taller than the card shows a scrollbar on the right
+edge (Widgets, and Appearance or Monitors on a short screen); drag it or
+scroll with the wheel.
+
 ## Menu integration
 
 The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a

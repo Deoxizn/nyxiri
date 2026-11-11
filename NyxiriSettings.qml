@@ -401,7 +401,15 @@ PopupCard {
       clip: true
 
       Flickable {
-        anchors.fill: parent
+        id: scrollArea
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        // A fixed gutter for the scrollbar on the right. Reserving it
+        // always (rather than only when overflowing) keeps the layout
+        // stable: a width that depends on contentHeight would bind-loop
+        // against the body width.
+        width: parent.width - Style.space(10)
         contentWidth: width
         contentHeight: body.implicitHeight
         boundsBehavior: Flickable.StopAtBounds
@@ -410,7 +418,7 @@ PopupCard {
 
         Column {
           id: body
-          width: viewport.width
+          width: scrollArea.width
           spacing: Style.spacing.lg
 
           // ------------------------------------------------------ appearance
@@ -1103,6 +1111,58 @@ PopupCard {
               }
             }
           }
+        }
+      }
+
+      // A visible scrollbar for the one shared scroll area: the Widgets
+      // tab (and Appearance/Monitors on a short screen) overflows the
+      // 430px viewport, and a wheel-only scroll gives no hint there is
+      // more. It shows only when the active tab actually overflows, so
+      // it serves every tab without taking space on the ones that fit.
+      // Upstream has no ScrollBar anywhere, so this is hand-rolled to
+      // match the card instead of pulling in QtQuick.Controls.
+      Item {
+        id: scrollBar
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: Style.space(10)
+        visible: scrollArea.contentHeight > viewport.height
+
+        readonly property real thumbHeight: Math.max(Style.space(28), viewport.height * viewport.height / scrollArea.contentHeight)
+        readonly property real thumbY: scrollArea.contentHeight > viewport.height
+          ? scrollArea.contentY / (scrollArea.contentHeight - viewport.height) * (viewport.height - thumbHeight)
+          : 0
+
+        function scrollTo(y) {
+          var maxY = scrollArea.contentHeight - viewport.height
+          var ratio = Math.max(0, Math.min(1, (y - thumbHeight / 2) / (viewport.height - thumbHeight)))
+          scrollArea.contentY = ratio * maxY
+        }
+
+        Rectangle {
+          anchors.fill: parent
+          anchors.leftMargin: Style.space(3)
+          anchors.rightMargin: Style.space(1)
+          color: popup.bar.foreground
+          opacity: 0.10
+          radius: width / 2
+        }
+
+        Rectangle {
+          x: Style.space(3)
+          y: scrollBar.thumbY
+          width: Style.space(6)
+          height: scrollBar.thumbHeight
+          color: popup.bar.foreground
+          opacity: 0.45
+          radius: width / 2
+        }
+
+        MouseArea {
+          anchors.fill: parent
+          onPressed: function(mouse) { scrollBar.scrollTo(mouse.y) }
+          onPositionChanged: function(mouse) { if (pressed) scrollBar.scrollTo(mouse.y) }
         }
       }
     }

@@ -82,6 +82,17 @@ test("the settings card forces keyboard focus into its text fields on click", ()
   assert.doesNotMatch(settings, /            TextField \{/)
 })
 
+test("the settings card shows a scrollbar when a tab overflows", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /id: scrollArea/)
+  assert.match(settings, /width: parent\.width - Style\.space\(10\)/)
+  assert.match(settings, /width: scrollArea\.width/)
+  assert.match(settings, /id: scrollBar/)
+  assert.match(settings, /visible: scrollArea\.contentHeight > viewport\.height/)
+  assert.match(settings, /thumbHeight/)
+  assert.match(settings, /onPressed: function\(mouse\) \{ scrollBar\.scrollTo\(mouse\.y\) \}/)
+})
+
 test("the widgets tab shows a row for every plugin even when kinds are unknown", () => {
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /rowShown/)
