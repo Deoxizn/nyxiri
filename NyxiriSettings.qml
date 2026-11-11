@@ -535,6 +535,17 @@ PopupCard {
               }
             }
 
+            SectionLabel { text: "TEXT" }
+
+            Toggle {
+              width: body.width
+              label: "Text shadow"
+              description: "Soft shadow under bar text and icons so it reads over any wallpaper"
+              checked: popup.pill.textShadow !== false
+              foreground: popup.bar.foreground
+              onClicked: popup.setPill({ textShadow: !checked })
+            }
+
             SectionLabel { text: "SHAPE" }
 
             // "Pill opacity" is the Fill level itself, so 100% means a
@@ -741,35 +752,74 @@ PopupCard {
 
             SectionLabel { text: "WORKSPACES" }
 
-            Dropdown {
+            // Dropdown popups open below the trigger and are clipped by
+            // this card's window, so on a short tab the last options fall
+            // off the bottom edge. Choice rows have nothing to clip.
+            Text {
               visible: popup.bar.nyxiriWorkspacesAvailable
-              width: body.width
-              label: "Mode"
-              value: popup.workspacesSetting("mode", "10")
-              options: [
-                { value: "10", label: "Ten" },
-                { value: "5", label: "Five" },
-                { value: "active", label: "Active only" }
-              ]
-              foreground: popup.bar.foreground
-              fontFamily: popup.bar.fontFamily
-              onChanged: function(value) { popup.setWorkspaces({ mode: value }) }
+              text: "Mode"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
             }
 
-            Dropdown {
+            Row {
               visible: popup.bar.nyxiriWorkspacesAvailable
               width: body.width
-              label: "Style"
-              value: popup.workspacesSetting("style", "numbers")
-              options: [
-                { value: "numbers", label: "Numbers" },
-                { value: "kanji", label: "Kanji" },
-                { value: "pacman", label: "Pac-Man" },
-                { value: "dots", label: "Dots" }
-              ]
-              foreground: popup.bar.foreground
-              fontFamily: popup.bar.fontFamily
-              onChanged: function(value) { popup.setWorkspaces({ style: value }) }
+              spacing: Style.spacing.xs
+
+              Repeater {
+                model: [
+                  { value: "10", label: "Ten" },
+                  { value: "5", label: "Five" },
+                  { value: "active", label: "Active only" }
+                ]
+
+                delegate: Button {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 2) / 3
+                  text: modelData.label
+                  selected: popup.workspacesSetting("mode", "10") === modelData.value
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setWorkspaces({ mode: modelData.value })
+                }
+              }
+            }
+
+            Text {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              text: "Style"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+            }
+
+            Row {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              spacing: Style.spacing.xs
+
+              Repeater {
+                model: [
+                  { value: "numbers", label: "Numbers" },
+                  { value: "kanji", label: "Kanji" },
+                  { value: "pacman", label: "Pac-Man" },
+                  { value: "dots", label: "Dots" }
+                ]
+
+                delegate: Button {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 3) / 4
+                  text: modelData.label
+                  selected: popup.workspacesSetting("style", "numbers") === modelData.value
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setWorkspaces({ style: modelData.value })
+                }
+              }
             }
 
             Toggle {

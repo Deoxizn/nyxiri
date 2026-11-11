@@ -112,11 +112,28 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /\{ value: "workspaces", label: "Workspaces" \}/)
   assert.match(settings, /visible: popup\.tab === "workspaces"/)
-  assert.match(settings, /workspacesSetting\("style", "numbers"\)/)
-  assert.match(settings, /value: "kanji", label: "Kanji"/)
-  assert.match(settings, /value: "pacman", label: "Pac-Man"/)
-  assert.match(settings, /value: "dots", label: "Dots"/)
-  assert.match(settings, /setWorkspaces\(\{ style: value \}\)/)
+  // Choice rows, not dropdowns: a dropdown popup is clipped by this card's
+  // window, so the last style option fell off the bottom edge.
+  assert.match(settings, /popup\.workspacesSetting\("mode", "10"\) === modelData\.value/)
+  assert.match(settings, /popup\.setWorkspaces\(\{ mode: modelData\.value \}\)/)
+  assert.match(settings, /popup\.workspacesSetting\("style", "numbers"\) === modelData\.value/)
+  assert.match(settings, /popup\.setWorkspaces\(\{ style: modelData\.value \}\)/)
+  assert.match(settings, /\{ value: "dots", label: "Dots" \}/)
+  assert.doesNotMatch(settings, /setWorkspaces\(\{ mode: value \}\)/)
+  assert.doesNotMatch(settings, /setWorkspaces\(\{ style: value \}\)/)
+})
+
+test("the bar shadows every widget's text and icons, behind a setting", () => {
+  const bar = read("Bar.qml")
+  assert.match(bar, /layer\.enabled: root\.nyxiri\.pill\.textShadow/)
+  assert.match(bar, /layer\.effect: MultiEffect \{/)
+  assert.match(bar, /shadowEnabled: true/)
+  assert.match(bar, /shadowColor: Qt\.rgba\(0, 0, 0, 0\.6\)/)
+  assert.match(bar, /shadowVerticalOffset: 1/)
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /text: "TEXT"/)
+  assert.match(settings, /popup\.pill\.textShadow !== false/)
+  assert.match(settings, /setPill\(\{ textShadow: !checked \}\)/)
 })
 
 test("upstream snapshots are present", () => {
