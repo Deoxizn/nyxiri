@@ -249,7 +249,9 @@ PopupCard {
   // the click selects text but no cursor appears and keys go nowhere, which
   // is exactly what the wordmark field did. Stock panels force focus
   // explicitly (weather Panel startEditingLocation, polkit passwordInput),
-  // so this one does the same on press, and lets the press through so
+  // and they do it deferred: forcing focus synchronously during the press
+  // can run before the click has activated the popup window, so it lands
+  // nowhere. This defers it the same way, and lets the press through so
   // cursor placement and selection keep working.
   component FocusField: TextField {
     MouseArea {
@@ -257,7 +259,8 @@ PopupCard {
       acceptedButtons: Qt.LeftButton
       onPressed: function(mouse) {
         mouse.accepted = false
-        parent.forceActiveFocus()
+        var field = parent
+        Qt.callLater(function() { field.forceActiveFocus() })
       }
     }
   }
