@@ -20,6 +20,23 @@ omarchy-shell devi.nyxiri openSettings
 Nyxiri is a plugin. It does not fork the shell and touches nothing under
 `/usr/share/omarchy`.
 
+## Preview
+
+<table>
+  <tr>
+    <td><img src="preview1.png" width="280" alt="Settings card, Appearance tab"></td>
+    <td><img src="preview2.png" width="280" alt="Settings card, Monitors tab"></td>
+    <td><img src="preview3.png" width="280" alt="Settings card, Workspaces tab"></td>
+  </tr>
+  <tr>
+    <td><img src="preview4.png" width="280" alt="Settings card, Widgets tab"></td>
+    <td><img src="preview5.png" width="280" alt="Menu, Appearance section with Nyxiri"></td>
+    <td><img src="preview6.png" width="280" alt="Menu, Nyxiri submenu"></td>
+  </tr>
+</table>
+
+![The Nyxiri bar](preview7.png)
+
 ## Requirements
 
 - Omarchy with the Quickshell-based shell (`/usr/share/omarchy/shell`).
