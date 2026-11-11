@@ -786,7 +786,9 @@ PopupCard {
               font.bold: true
             }
 
-            Row {
+            // Seven styles no longer fit one row, so this one wraps: four
+            // on the first line, three on the second.
+            Flow {
               visible: popup.bar.nyxiriWorkspacesAvailable
               width: body.width
               spacing: Style.spacing.xs
@@ -796,7 +798,10 @@ PopupCard {
                   { value: "numbers", label: "Numbers" },
                   { value: "kanji", label: "Kanji" },
                   { value: "pacman", label: "Pac-Man" },
-                  { value: "dots", label: "Dots" }
+                  { value: "dots", label: "Dots" },
+                  { value: "magic", label: "Magic" },
+                  { value: "default", label: "Default" },
+                  { value: "aurora", label: "Aurora" }
                 ]
 
                 delegate: Button {

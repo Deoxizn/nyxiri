@@ -119,6 +119,11 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   assert.match(settings, /popup\.workspacesSetting\("style", "numbers"\) === modelData\.value/)
   assert.match(settings, /popup\.setWorkspaces\(\{ style: modelData\.value \}\)/)
   assert.match(settings, /\{ value: "dots", label: "Dots" \}/)
+  assert.match(settings, /\{ value: "magic", label: "Magic" \}/)
+  assert.match(settings, /\{ value: "default", label: "Default" \}/)
+  assert.match(settings, /\{ value: "aurora", label: "Aurora" \}/)
+  // Seven styles no longer fit one row, so the style picker wraps.
+  assert.match(settings, /\/\/ Seven styles no longer fit one row, so this one wraps/)
   assert.doesNotMatch(settings, /setWorkspaces\(\{ mode: value \}\)/)
   assert.doesNotMatch(settings, /setWorkspaces\(\{ style: value \}\)/)
 })
