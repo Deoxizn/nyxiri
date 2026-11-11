@@ -89,6 +89,25 @@ test("the widgets tab shows a row for every plugin even when kinds are unknown",
   assert.match(settings, /plugins\.length \+ " plugins"/)
 })
 
+test("the bar exposes the workspaces widget's settings like the menu's", () => {
+  const bar = read("Bar.qml")
+  assert.match(bar, /function nyxiriWorkspacesEntryKey\(\)/)
+  assert.match(bar, /function nyxiriWorkspacesSetting\(name, fallback\)/)
+  assert.match(bar, /nyxiriWorkspacesAvailable: nyxiriWorkspacesEntryKey\(\) !== ""/)
+  assert.match(bar, /function writeWorkspacesSettings\(patch\)/)
+  assert.match(bar, /updateEntryInline\("devi\.nyxiri-workspaces", next\)/)
+})
+
+test("the settings card offers workspaces mode and hide-empty controls", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /text: "WORKSPACES"/)
+  assert.match(settings, /workspacesSetting\("mode", "10"\)/)
+  assert.match(settings, /value: "active", label: "Active only"/)
+  assert.match(settings, /workspacesSetting\("hideEmpty", false\)/)
+  assert.match(settings, /setWorkspaces\(\{ hideEmpty: !checked \}\)/)
+  assert.match(settings, /popup\.bar\.nyxiriWorkspacesAvailable/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)

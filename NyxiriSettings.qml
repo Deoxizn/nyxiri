@@ -94,6 +94,14 @@ PopupCard {
     popup.bar.writeMenuSettings(patch)
   }
 
+  function workspacesSetting(name, fallback) {
+    return popup.bar.nyxiriWorkspacesSetting(name, fallback)
+  }
+
+  function setWorkspaces(patch) {
+    popup.bar.writeWorkspacesSettings(patch)
+  }
+
   // ---------------------------------------------------------------- plugins
 
   function parsePlugins(text) {
@@ -719,6 +727,38 @@ PopupCard {
               checked: popup.menuSetting("hoverOpen", true) !== false
               foreground: popup.bar.foreground
               onClicked: popup.setMenu({ hoverOpen: !checked })
+            }
+
+            // The workspaces widget's settings live in its own layout entry;
+            // only offer these controls when it is actually on the bar.
+            SectionLabel {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              text: "WORKSPACES"
+            }
+
+            Dropdown {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              label: "Mode"
+              value: popup.workspacesSetting("mode", "10")
+              options: [
+                { value: "10", label: "Ten" },
+                { value: "5", label: "Five" },
+                { value: "active", label: "Active only" }
+              ]
+              foreground: popup.bar.foreground
+              fontFamily: popup.bar.fontFamily
+              onChanged: function(value) { popup.setWorkspaces({ mode: value }) }
+            }
+
+            Toggle {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              label: "Hide empty workspaces"
+              description: "Drops workspaces with no windows; the focused one always stays"
+              checked: popup.workspacesSetting("hideEmpty", false) === true
+              foreground: popup.bar.foreground
+              onClicked: popup.setWorkspaces({ hideEmpty: !checked })
             }
           }
 

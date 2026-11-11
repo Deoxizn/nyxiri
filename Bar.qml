@@ -72,6 +72,25 @@ Item {
     return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
   }
   readonly property bool nyxiriMenuAvailable: nyxiriMenuEntryKey() !== ""
+  // The workspaces widget's settings live in its own bar layout entry, like
+  // the menu fork's. The card can edit them only when
+  // devi.nyxiri-workspaces is actually on the bar.
+  function nyxiriWorkspacesEntryKey() {
+    var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
+    for (var key in entries) {
+      if (Nyxiri.baseWidgetId(key) === "devi.nyxiri-workspaces") return String(key)
+    }
+    return ""
+  }
+  function nyxiriWorkspacesSetting(name, fallback) {
+    var key = nyxiriWorkspacesEntryKey()
+    if (!key) return fallback
+    var entries = layoutWidgets.entries
+    var entry = entries[key]
+    if (!entry || typeof entry !== "object") return fallback
+    return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
+  }
+  readonly property bool nyxiriWorkspacesAvailable: nyxiriWorkspacesEntryKey() !== ""
   // NYXIRI-END nyxiri-config
   // Injected by the host shell. Used for shell-wide actions such as opening
   // settings and persisting inline widget state.
@@ -874,6 +893,21 @@ Item {
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
     return shell.updateEntryInline("devi.nyxiri-menu", next)
+  }
+
+  // Replace devi.nyxiri-workspaces' inline settings with the current entry
+  // plus `patch`. Same replace-not-merge contract as writeMenuSettings.
+  function writeWorkspacesSettings(patch) {
+    if (!shell || typeof shell.updateEntryInline !== "function") return false
+    var key = nyxiriWorkspacesEntryKey()
+    if (!key) return false
+    var entry = layoutWidgets.entries[key]
+    var next = {}
+    if (entry && typeof entry === "object") {
+      for (var name in entry) if (name !== "id") next[name] = entry[name]
+    }
+    for (var patchName in patch) next[patchName] = patch[patchName]
+    return shell.updateEntryInline("devi.nyxiri-workspaces", next)
   }
   // NYXIRI-END nyxiri-write
 
