@@ -313,3 +313,28 @@ test("upstream snapshots are present", () => {
     assert.ok(fs.existsSync(path.join(root, name)), name)
   }
 })
+
+test("the all-in-one installer covers the suite, cats optional, wallcraft out", () => {
+  const install = read("scripts/install-all.sh")
+  // Core: the bar and the widgets that belong to it.
+  for (const id of ["devi.nyxiri", "devi.nyxiri-menu", "devi.nyxiri-workspaces", "deoxizn.clock", "devi.weather", "devi.arch-updates"]) {
+    assert.match(install, new RegExp("add_plugin " + id.replace(".", "\\.") + " https://github.com/Deoxizn/"))
+  }
+  // Cats are opt-in behind --with-cats, never installed by default.
+  assert.match(install, /--with-cats\) with_cats=1/)
+  assert.match(install, /if \(\( with_cats \)\)/)
+  assert.match(install, /add_plugin deoxizn\.cpurr/)
+  assert.match(install, /add_plugin deoxizn\.bongocat/)
+  // Wallcraft is independent (its settings work without the bar), so it
+  // is not installed here, only mentioned as a separate install.
+  assert.doesNotMatch(install, /add_plugin devi\.wallcraft/)
+  assert.match(install, /Wallcraft is a separate install/)
+  // Non-interactive: --yes skips the gum prompts, so the script is safe
+  // to run off GitHub with bash <(curl ...). Already-installed plugins
+  // are skipped, never removed. Menu goes on the bar before workspaces.
+  assert.match(install, /omarchy plugin add "\$url" --enable --yes/)
+  assert.match(install, /already installed, skipping/)
+  assert.match(install, /omarchy bar use devi\.nyxiri/)
+  assert.ok(install.indexOf('put devi.nyxiri-menu left') < install.indexOf('put devi.nyxiri-workspaces left'))
+  assert.match(install, /omarchy restart shell/)
+})
