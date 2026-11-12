@@ -91,6 +91,25 @@ Item {
     return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
   }
   readonly property bool nyxiriWorkspacesAvailable: nyxiriWorkspacesEntryKey() !== ""
+  // The weather widget's settings live in its own bar layout entry, like
+  // the menu and workspaces forks'. The card can edit them only when
+  // devi.weather is actually on the bar.
+  function nyxiriWeatherEntryKey() {
+    var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
+    for (var key in entries) {
+      if (Nyxiri.baseWidgetId(key) === "devi.weather") return String(key)
+    }
+    return ""
+  }
+  function nyxiriWeatherSetting(name, fallback) {
+    var key = nyxiriWeatherEntryKey()
+    if (!key) return fallback
+    var entries = layoutWidgets.entries
+    var entry = entries[key]
+    if (!entry || typeof entry !== "object") return fallback
+    return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
+  }
+  readonly property bool nyxiriWeatherAvailable: nyxiriWeatherEntryKey() !== ""
   // NYXIRI-END nyxiri-config
   // Injected by the host shell. Used for shell-wide actions such as opening
   // settings and persisting inline widget state.
@@ -906,6 +925,21 @@ Item {
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
     return shell.updateEntryInline("devi.nyxiri-workspaces", next)
+  }
+
+  // Replace devi.weather's inline settings with the current entry plus
+  // `patch`. Same replace-not-merge contract as writeMenuSettings.
+  function writeWeatherSettings(patch) {
+    if (!shell || typeof shell.updateEntryInline !== "function") return false
+    var key = nyxiriWeatherEntryKey()
+    if (!key) return false
+    var entry = layoutWidgets.entries[key]
+    var next = {}
+    if (entry && typeof entry === "object") {
+      for (var name in entry) if (name !== "id") next[name] = entry[name]
+    }
+    for (var patchName in patch) next[patchName] = patch[patchName]
+    return shell.updateEntryInline("devi.weather", next)
   }
   // NYXIRI-END nyxiri-write
 

@@ -272,6 +272,29 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
   assert.match(settings, /description: popup\.workspacesSetting\("mode", "10"\) === "active" \? "Does nothing while Mode is Active only" : "Drops workspaces with no windows; the focused one always stays"/)
 })
 
+test("the settings card has a weather secondary-location field", () => {
+  const settings = read("NyxiriSettings.qml")
+  const bar = read("Bar.qml")
+  // The card reads/writes devi.weather's layout entry the same way it
+  // does the menu and workspaces entries, only when the widget is on
+  // the bar.
+  assert.match(bar, /Nyxiri\.baseWidgetId\(key\) === "devi\.weather"/)
+  assert.match(bar, /function nyxiriWeatherSetting\(name, fallback\)/)
+  assert.match(bar, /nyxiriWeatherAvailable: nyxiriWeatherEntryKey\(\) !== ""/)
+  assert.match(bar, /function writeWeatherSettings\(patch\)/)
+  assert.match(bar, /shell\.updateEntryInline\("devi\.weather", next\)/)
+  assert.match(settings, /function weatherSetting\(name, fallback\)/)
+  assert.match(settings, /function setWeather\(patch\)/)
+  // The field lives in the Appearance tab's WEATHER section, commits the
+  // raw string (a name or "lat,lon"), and explains itself.
+  assert.match(settings, /text: "WEATHER"/)
+  assert.match(settings, /text: "Secondary location"/)
+  assert.match(settings, /placeholderText: "Tucson"/)
+  assert.match(settings, /popup\.weatherSetting\("secondaryLocation", ""\)/)
+  assert.match(settings, /popup\.setWeather\(\{ secondaryLocation: value \}\)/)
+  assert.match(settings, /A second city shown under the main forecast/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)

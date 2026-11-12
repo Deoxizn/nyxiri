@@ -127,6 +127,14 @@ KeyboardPanel {
     popup.bar.writeWorkspacesSettings(patch)
   }
 
+  function weatherSetting(name, fallback) {
+    return popup.bar.nyxiriWeatherSetting(name, fallback)
+  }
+
+  function setWeather(patch) {
+    popup.bar.writeWeatherSettings(patch)
+  }
+
   // ---------------------------------------------------------------- classic
 
   // Classic workspaces mode, read from the workspaces plugin's bin/mode.
@@ -949,6 +957,44 @@ KeyboardPanel {
               checked: popup.menuSetting("hoverOpen", true) !== false
               foreground: popup.bar.foreground
               onClicked: popup.setMenu({ hoverOpen: !checked })
+            }
+
+            // The weather fork's secondary location is a widget setting;
+            // only offer it when devi.weather is actually on the bar.
+            // A name ("Tucson") or "lat,lon". Empty means no secondary.
+            SectionLabel {
+              visible: popup.bar.nyxiriWeatherAvailable
+              text: "WEATHER"
+            }
+
+            Text {
+              visible: popup.bar.nyxiriWeatherAvailable
+              text: "Secondary location"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+            }
+
+            FocusField {
+              visible: popup.bar.nyxiriWeatherAvailable
+              width: body.width
+              settingText: popup.weatherSetting("secondaryLocation", "")
+              placeholderText: "Tucson"
+              foreground: popup.bar.foreground
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.body
+              onCommit: function(value) { popup.setWeather({ secondaryLocation: value }) }
+            }
+
+            Text {
+              visible: popup.bar.nyxiriWeatherAvailable
+              width: body.width
+              text: "A second city shown under the main forecast. Leave empty for none."
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
             }
           }
 
