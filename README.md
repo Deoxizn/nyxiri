@@ -192,8 +192,8 @@ The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a
 
 The separate [nyxiri-workspaces](https://github.com/Deoxizn/nyxiri-workspaces)
 plugin replaces the stock workspaces widget with one the bar can style:
-seven marker styles (numbers, kanji, Pac-Man/ghost, dots, magic, default,
-aurora), a Ten / Five / Active only mode, and hide-empty. Its settings live on the widget's own layout
+eight marker styles (numbers, kanji, Pac-Man/ghost, dots, magic, default,
+aurora, apps), a Ten / Five / Active only mode, and hide-empty. Its settings live on the widget's own layout
 entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
 tab edits them while the widget is on the bar. It is optional; Nyxiri
 works with the stock workspaces widget too.

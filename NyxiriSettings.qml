@@ -819,8 +819,8 @@ PopupCard {
               font.bold: true
             }
 
-            // Seven styles no longer fit one row, so this one wraps: four
-            // on the first line, three on the second.
+            // Eight styles no longer fit one row, so this one wraps: four
+            // on each line.
             Flow {
               visible: popup.bar.nyxiriWorkspacesAvailable
               width: body.width
@@ -834,7 +834,8 @@ PopupCard {
                   { value: "dots", label: "Dots" },
                   { value: "magic", label: "Magic" },
                   { value: "default", label: "Default" },
-                  { value: "aurora", label: "Aurora" }
+                  { value: "aurora", label: "Aurora" },
+                  { value: "apps", label: "Apps" }
                 ]
 
                 delegate: Button {
