@@ -258,6 +258,12 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
   assert.match(settings, /placeholderText: "DP-1:1-5,HDMI-A-1:6-10"/)
   assert.match(settings, /popup\.workspacesSetting\("ranges", ""\)/)
   assert.match(settings, /popup\.setWorkspaces\(\{ ranges: value \}\)/)
+  // In classic with a range set, the ranges decide how many show, so
+  // Ten vs Five is a no-op: a hint under Mode says the modes are really
+  // a 4.5 thing. Without a range, Mode still sets the count, so the
+  // hint stays hidden.
+  assert.match(settings, /text: "Modes really only for 4\.5"/)
+  assert.match(settings, /visible: popup\.bar\.nyxiriWorkspacesAvailable && popup\.classicMode && popup\.workspacesSetting\("ranges", ""\) !== ""/)
 })
 
 test("upstream snapshots are present", () => {

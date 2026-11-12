@@ -998,6 +998,19 @@ KeyboardPanel {
               }
             }
 
+            // In classic with a range set, the ranges decide how many
+            // show, so Ten vs Five is a no-op: the modes are really a
+            // 4.5 thing. Without a range, Mode still sets the count.
+            Text {
+              visible: popup.bar.nyxiriWorkspacesAvailable && popup.classicMode && popup.workspacesSetting("ranges", "") !== ""
+              width: body.width
+              text: "Modes really only for 4.5"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+            }
+
             Text {
               visible: popup.bar.nyxiriWorkspacesAvailable
               text: "Style"
