@@ -2066,7 +2066,7 @@ Item {
     // NYXIRI-BEGIN nyxiri-settings-card
     // Only the surface that owns the open card maps it. `owner` routes
     // outside-click dismissal back into the bar's external state instead of
-    // letting PopupCard break the `open` binding.
+    // letting KeyboardPanel break the `open` binding.
     QtObject {
       id: nyxiriSettingsOwner
       function close() { root.closeNyxiriSettings() }

@@ -10,10 +10,10 @@ import "Nyxiri.js" as Nyxiri
 // The in-bar Nyxiri settings card. Instantiated once per bar surface and
 // opened on the focused monitor; every control writes a partial config through
 // bar.writeNyxiri(), so persistence and reloading stay in one place.
-PopupCard {
+KeyboardPanel {
   id: popup
 
-  // `bar` and `open` come from PopupCard. screenName identifies the surface
+  // `bar` and `open` come from KeyboardPanel. screenName identifies the surface
   // this card belongs to.
   property string screenName: ""
   property string initialTab: "appearance"
@@ -250,14 +250,21 @@ PopupCard {
   onInitialTabChanged: if (open) tab = initialTab
   onTabChanged: if (tab === "widgets" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
 
-  // PopupCard does not consume keys, so Escape is scoped to the card while it
-  // is open. The close button remains the pointer path. NOTE: Shortcut (and
-  // Process) must NOT be direct children of PopupCard: its default property
-  // is the visual contentItem list, and a QQuickShortcut there fails the
-  // whole file ("Cannot assign object of type QQuickShortcut to list
-  // property contentItem"), which makes NyxiriSettings unavailable and the
-  // bar falls back to omarchy.bar. They live inside the content Column
-  // below instead, where Item.data accepts non-visual children.
+  // This was a PopupCard (xdg-popup) and its text fields never took input:
+  // xdg-popups only receive keys after a click routes focus through their
+  // parent surface, so the wordmark and image fields showed a blinking
+  // cursor and swallowed every key, and no amount of forceActiveFocus
+  // fixed it. KeyboardPanel is the stock fix: a layer-shell surface with
+  // a brief Exclusive focus prime, then OnDemand, the same way the
+  // weather panel's location search works. Escape is scoped to the card
+  // while it is open. The close button remains the pointer path. NOTE:
+  // Shortcut (and Process) must NOT be direct children of KeyboardPanel
+  // either: its default property is the visual contentItem list, and a
+  // QQuickShortcut there fails the whole file ("Cannot assign object of
+  // type QQuickShortcut to list property contentItem"), which makes
+  // NyxiriSettings unavailable and the bar falls back to omarchy.bar.
+  // They live inside the content Column below instead, where Item.data
+  // accepts non-visual children.
   contentWidth: fittedContentWidth(Style.space(440))
   contentHeight: fittedContentHeight(column.implicitHeight, Style.space(620))
 
@@ -286,7 +293,52 @@ PopupCard {
   // can run before the click has activated the popup window, so it lands
   // nowhere. This defers it the same way, and lets the press through so
   // cursor placement and selection keep working.
+  //
+  // Two more ways a typed value got lost, which is why the wordmark and
+  // image fields were hit or miss:
+  //   1. `text:` was bound straight to the saved setting, and the binding
+  //      re-evaluates on ANY layout write (a toggle, a slider, another
+  //      field's save), snapping in-progress typing back to the last
+  //      saved value. So the field owns its text now and only syncs from
+  //      `settingText` when the saved value actually changes.
+  //   2. `onEditingFinished` only fires on Enter or a clean focus loss;
+  //      closing the card (Escape, click-away) destroyed the edit. The
+  //      field commits on its own now: 400ms after the last keystroke,
+  //      and immediately on Enter or focus loss, so typing sticks
+  //      however the card is left. The card is instantiated once per
+  //      bar surface and only hidden on close, so the timer survives it.
   component FocusField: TextField {
+    signal commit(string value)
+
+    // The saved value, bound by the usage. The field's text is only
+    // overwritten from it when it actually changes, so typing is never
+    // clobbered by an unrelated layout write.
+    property string settingText: ""
+    onSettingTextChanged: {
+      if (settingText !== text) text = settingText
+      lastCommitted = settingText
+    }
+
+    property string lastCommitted: ""
+
+    Component.onCompleted: lastCommitted = text
+
+    function commitNow() {
+      commitTimer.stop()
+      if (text === lastCommitted) return
+      lastCommitted = text
+      commit(text)
+    }
+
+    Timer {
+      id: commitTimer
+      interval: 400
+      onTriggered: commitNow()
+    }
+
+    onTextChanged: commitTimer.restart()
+    onEditingFinished: commitNow()
+
     MouseArea {
       anchors.fill: parent
       acceptedButtons: Qt.LeftButton
@@ -521,13 +573,13 @@ PopupCard {
             FocusField {
               visible: popup.pill.color === "custom"
               width: body.width
-              text: popup.pill.customColor
+              settingText: popup.pill.customColor
               placeholderText: "#7aa2f7"
               foreground: popup.bar.foreground
               font.family: popup.bar.fontFamily
               font.pixelSize: Style.font.body
-              onEditingFinished: {
-                if (Nyxiri.isHexColor(text)) popup.setPill({ customColor: text })
+              onCommit: function(value) {
+                if (Nyxiri.isHexColor(value)) popup.setPill({ customColor: value })
               }
             }
 
@@ -667,80 +719,121 @@ PopupCard {
               text: "MENU TRIGGER"
             }
 
-            Dropdown {
+            // Dropdown popups are clipped by this card's window, so the
+            // last option falls off the bottom edge, and their clicks
+            // clear the card's focus grab, so picking an option closed
+            // the card. Choice rows have neither problem, same as Mode
+            // and Style below.
+            Text {
               visible: popup.bar.nyxiriMenuAvailable
-              width: body.width
-              label: "Icon mode"
-              value: popup.menuSetting("iconMode", "glyph")
-              options: [
-                { value: "glyph", label: "Glyph" },
-                { value: "image", label: "Image / SVG" },
-                { value: "wordmark", label: "Wordmark" }
-              ]
-              foreground: popup.bar.foreground
-              fontFamily: popup.bar.fontFamily
-              onChanged: function(value) { popup.setMenu({ iconMode: value }) }
+              text: "Icon mode"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
             }
 
-            Dropdown {
+            Row {
+              visible: popup.bar.nyxiriMenuAvailable
+              width: body.width
+              spacing: Style.spacing.xs
+
+              Repeater {
+                model: [
+                  { value: "glyph", label: "Glyph" },
+                  { value: "image", label: "Image / SVG" },
+                  { value: "wordmark", label: "Wordmark" }
+                ]
+
+                delegate: Button {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 2) / 3
+                  text: modelData.label
+                  selected: popup.menuSetting("iconMode", "glyph") === modelData.value
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setMenu({ iconMode: modelData.value })
+                }
+              }
+            }
+
+            Text {
+              visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
+              text: "Glyph"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+            }
+
+            Row {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
               width: body.width
-              label: "Glyph"
-              value: popup.menuSetting("glyph", "omarchy")
-              options: [
-                { value: "omarchy", label: "Omarchy" },
-                { value: "arch", label: "Arch" },
-                { value: "custom", label: "Custom Nerd Font glyph" }
-              ]
-              foreground: popup.bar.foreground
-              fontFamily: popup.bar.fontFamily
-              onChanged: function(value) { popup.setMenu({ glyph: value }) }
+              spacing: Style.spacing.xs
+
+              Repeater {
+                model: [
+                  { value: "omarchy", label: "Omarchy" },
+                  { value: "arch", label: "Arch" },
+                  { value: "custom", label: "Custom" }
+                ]
+
+                delegate: Button {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 2) / 3
+                  text: modelData.label
+                  selected: popup.menuSetting("glyph", "omarchy") === modelData.value
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setMenu({ glyph: modelData.value })
+                }
+              }
             }
 
             FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
                 && popup.menuSetting("glyph", "omarchy") === "custom"
               width: body.width
-              text: popup.menuSetting("customGlyph", "")
+              settingText: popup.menuSetting("customGlyph", "")
               placeholderText: "Glyph"
               foreground: popup.bar.foreground
               font.family: popup.bar.fontFamily
               font.pixelSize: Style.font.body
-              onEditingFinished: popup.setMenu({ customGlyph: text })
+              onCommit: function(value) { popup.setMenu({ customGlyph: value }) }
             }
 
             FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
                 && popup.menuSetting("glyph", "omarchy") === "custom"
               width: body.width
-              text: popup.menuSetting("iconFont", "omarchy")
+              settingText: popup.menuSetting("iconFont", "omarchy")
               placeholderText: "Font family"
               foreground: popup.bar.foreground
               font.family: popup.bar.fontFamily
               font.pixelSize: Style.font.body
-              onEditingFinished: popup.setMenu({ iconFont: text })
+              onCommit: function(value) { popup.setMenu({ iconFont: value }) }
             }
 
             FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
               width: body.width
-              text: popup.menuSetting("iconSource", "")
+              settingText: popup.menuSetting("iconSource", "")
               placeholderText: "/path/to/icon.svg"
               foreground: popup.bar.foreground
               font.family: popup.bar.fontFamily
               font.pixelSize: Style.font.body
-              onEditingFinished: popup.setMenu({ iconSource: text })
+              onCommit: function(value) { popup.setMenu({ iconSource: value }) }
             }
 
             FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
               width: body.width
-              text: popup.menuSetting("wordmark", "Nyxiri")
+              settingText: popup.menuSetting("wordmark", "Nyxiri")
               placeholderText: "Nyxiri"
               foreground: popup.bar.foreground
               font.family: popup.bar.fontFamily
               font.pixelSize: Style.font.body
-              onEditingFinished: popup.setMenu({ wordmark: text })
+              onCommit: function(value) { popup.setMenu({ wordmark: value }) }
             }
 
             Toggle {

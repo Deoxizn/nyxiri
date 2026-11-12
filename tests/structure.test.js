@@ -46,9 +46,9 @@ test("the working bar imports the config module and keeps its entry point", () =
   assert.equal(manifest.entryPoints.bar, "Bar.qml")
 })
 
-test("the settings card is a PopupCard and does not redeclare bar", () => {
+test("the settings card is a KeyboardPanel and does not redeclare bar", () => {
   const settings = read("NyxiriSettings.qml")
-  assert.match(settings, /^PopupCard \{/m)
+  assert.match(settings, /^KeyboardPanel \{/m)
   assert.doesNotMatch(settings, /required property var bar/)
 })
 
@@ -80,6 +80,57 @@ test("the settings card forces keyboard focus into its text fields on click", ()
   assert.match(settings, /component FocusField: TextField/)
   assert.match(settings, /forceActiveFocus/)
   assert.doesNotMatch(settings, /            TextField \{/)
+})
+
+test("the settings card is a KeyboardPanel so its text fields take input", () => {
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /^KeyboardPanel \{/m)
+  assert.doesNotMatch(settings, /^PopupCard \{/m)
+  // A PopupCard is an xdg-popup: it only receives keys after a click
+  // routes focus through its parent surface, so the wordmark and image
+  // fields showed a blinking cursor and swallowed every key, and no
+  // amount of forceActiveFocus fixed it. KeyboardPanel is the stock
+  // layer-shell fix (Exclusive prime, then OnDemand), the same way the
+  // weather panel's location search works.
+})
+
+test("text fields commit as you type instead of only on Enter", () => {
+  const settings = read("NyxiriSettings.qml")
+  // The field owns its text and only syncs from the saved value when that
+  // value changes, so an unrelated layout write can't snap in-progress
+  // typing back to the last saved value (the wordmark/image hit-or-miss).
+  assert.match(settings, /property string settingText/)
+  assert.match(settings, /onSettingTextChanged:/)
+  // A debounced commit after the last keystroke, plus an immediate commit
+  // on Enter or focus loss, so closing the card can't lose the edit.
+  assert.match(settings, /signal commit\(string value\)/)
+  assert.match(settings, /commitTimer\.restart\(\)/)
+  assert.match(settings, /onEditingFinished: commitNow\(\)/)
+  // Every text field uses the new contract, no bound `text:` left.
+  assert.match(settings, /settingText: popup\.menuSetting\("wordmark", "Nyxiri"\)/)
+  assert.match(settings, /settingText: popup\.menuSetting\("iconSource", ""\)/)
+  assert.match(settings, /settingText: popup\.pill\.customColor/)
+  assert.match(settings, /onCommit: function\(value\) \{ popup\.setMenu\(\{ wordmark: value \}\) \}/)
+  assert.match(settings, /onCommit: function\(value\) \{ popup\.setMenu\(\{ iconSource: value \}\) \}/)
+  assert.doesNotMatch(settings, /text: popup\.menuSetting\(/)
+  assert.doesNotMatch(settings, /text: popup\.pill\.customColor/)
+  assert.doesNotMatch(settings, /onEditingFinished: popup\.setMenu\(/)
+})
+
+test("the menu trigger uses choice rows, not dropdowns", () => {
+  const settings = read("NyxiriSettings.qml")
+  // Dropdown popups are clipped by the card's window, so the Custom
+  // option never showed, and their clicks clear the card's focus grab,
+  // so picking an option closed the card. Choice rows have neither
+  // problem, same as Mode and Style.
+  assert.match(settings, /text: "Icon mode"/)
+  assert.match(settings, /\{ value: "wordmark", label: "Wordmark" \}/)
+  assert.match(settings, /onClicked: popup\.setMenu\(\{ iconMode: modelData\.value \}\)/)
+  assert.match(settings, /text: "Glyph"/)
+  assert.match(settings, /\{ value: "custom", label: "Custom" \}/)
+  assert.match(settings, /onClicked: popup\.setMenu\(\{ glyph: modelData\.value \}\)/)
+  assert.doesNotMatch(settings, /onChanged: function\(value\) \{ popup\.setMenu\(\{ iconMode: value \}\) \}/)
+  assert.doesNotMatch(settings, /onChanged: function\(value\) \{ popup\.setMenu\(\{ glyph: value \}\) \}/)
 })
 
 test("the settings card shows a scrollbar when a tab overflows", () => {
