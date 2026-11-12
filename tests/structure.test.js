@@ -344,9 +344,23 @@ test("the README lists the installer and every plugin in the suite", () => {
   // The all-in-one installer is the install method.
   assert.match(readme, /scripts\/install-all\.sh/)
   assert.match(readme, /--with-cats/)
-  // Every plugin the suite now includes, not just bar/menu/workspaces.
-  for (const id of ["devi.nyxiri", "devi.nyxiri-menu", "devi.nyxiri-workspaces", "deoxizn.clock", "devi.weather", "devi.arch-updates", "deoxizn.cpurr", "deoxizn.bongocat"]) {
-    assert.match(readme, new RegExp(id.replace(".", "\\.")))
+  // Every plugin the suite now includes, linked to its repo, not
+  // described in its own section: the details live in that plugin's
+  // own README.
+  for (const [id, repo] of [
+    ["devi.nyxiri", "Deoxizn/nyxiri"],
+    ["devi.nyxiri-menu", "Deoxizn/nyxiri-menu"],
+    ["devi.nyxiri-workspaces", "Deoxizn/nyxiri-workspaces"],
+    ["deoxizn.clock", "Deoxizn/omarchy-clock"],
+    ["devi.weather", "Deoxizn/omarchy-weather"],
+    ["devi.arch-updates", "Deoxizn/Arch-Updates"],
+    ["deoxizn.cpurr", "Deoxizn/omarchy-cpurr"],
+    ["deoxizn.bongocat", "Deoxizn/omarchy-bongocat"],
+  ]) {
+    assert.match(readme, new RegExp("\\[\\*\\*" + id.replace(".", "\\.") + "\\*\\*\\]\\(https://github.com/" + repo + "\\)"))
+  }
+  for (const heading of ["## Clock widget", "## Weather widget", "## Arch updates widget", "## Cat widgets"]) {
+    assert.doesNotMatch(readme, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
   }
   // Wallcraft is called out as a separate, independent install.
   assert.match(readme, /devi\.wallcraft/)
