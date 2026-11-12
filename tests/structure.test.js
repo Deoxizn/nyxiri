@@ -144,6 +144,12 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   assert.match(settings, /\{ value: "apps", label: "Apps" \}/)
   // Eight styles no longer fit one row, so the style picker wraps.
   assert.match(settings, /\/\/ Eight styles no longer fit one row, so this one wraps/)
+  // The icon size slider only shows for the Apps style, and writes back
+  // through the workspaces settings.
+  assert.match(settings, /visible: popup\.bar\.nyxiriWorkspacesAvailable && popup\.workspacesSetting\("style", "numbers"\) === "apps"/)
+  assert.match(settings, /text: "App icon size"/)
+  assert.match(settings, /popup\.workspacesSetting\("iconSize", 16\)/)
+  assert.match(settings, /popup\.setWorkspaces\(\{ iconSize: value \}\)/)
   assert.doesNotMatch(settings, /setWorkspaces\(\{ mode: value \}\)/)
   assert.doesNotMatch(settings, /setWorkspaces\(\{ style: value \}\)/)
 })

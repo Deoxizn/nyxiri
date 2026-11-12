@@ -860,6 +860,31 @@ PopupCard {
               onClicked: popup.setWorkspaces({ hideEmpty: !checked })
             }
 
+            // App icon size only matters for the Apps style, so the slider
+            // only shows while that style is picked.
+            Row {
+              visible: popup.bar.nyxiriWorkspacesAvailable && popup.workspacesSetting("style", "numbers") === "apps"
+              width: body.width
+              spacing: Style.spacing.sm
+              BodyText { text: "App icon size"; width: Style.space(76) }
+              PanelSlider {
+                width: parent.width - Style.space(76) - iconSizeValue.width - parent.spacing * 2
+                bar: popup.bar
+                value: popup.workspacesSetting("iconSize", 16)
+                minimum: 12
+                maximum: 24
+                step: 1
+                integer: true
+                onReleased: function(value) { popup.setWorkspaces({ iconSize: value }) }
+              }
+              BodyText {
+                id: iconSizeValue
+                text: String(popup.workspacesSetting("iconSize", 16)) + "px"
+                width: Style.space(40)
+                horizontalAlignment: Text.AlignRight
+              }
+            }
+
             BodyText {
               visible: !popup.bar.nyxiriWorkspacesAvailable
               width: body.width
