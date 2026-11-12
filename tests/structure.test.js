@@ -182,6 +182,28 @@ test("the bar exposes the workspaces widget's settings like the menu's", () => {
   assert.match(bar, /updateEntryInline\("devi\.nyxiri-workspaces", next\)/)
 })
 
+test("the bar api no longer carries the removed center reveal properties", () => {
+  const bar = read("Bar.qml")
+  // Upstream c149add removed centerSectionRevealHeld and
+  // _centerHoverRevealSuppressed from PluginBarApi; assigning them throws
+  // and aborts the api wiring, so no widget gets settings or clicks.
+  assert.doesNotMatch(bar, /api\.centerSectionRevealHeld/)
+  assert.doesNotMatch(bar, /api\._centerHoverRevealSuppressed/)
+  assert.doesNotMatch(bar, /_setCenterHoverRevealSuppressed/)
+  // The same commit tells widgets in the tray drawer outright.
+  assert.match(bar, /property bool inTraySection: false/)
+  assert.match(bar, /inTraySection = owner\.region === "tray"/)
+  assert.match(bar, /if \("inTraySection" in target\) target\.inTraySection = inTraySection/)
+})
+
+test("the settings card probe cleanup uses the bare watchdog id", () => {
+  const settings = read("NyxiriSettings.qml")
+  // The watchdog timer is nested, so popup.probeWatchdog does not resolve;
+  // the bare id is the one that works (as the other two uses already do).
+  assert.doesNotMatch(settings, /popup\.probeWatchdog/)
+  assert.match(settings, /probeWatchdog\.running = false/)
+})
+
 test("the settings card offers workspaces mode and hide-empty controls", () => {
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /text: "WORKSPACES"/)

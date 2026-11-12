@@ -376,7 +376,7 @@ KeyboardPanel {
         // Always clear loading: a stuck "Loading…" with an empty list was
         // indistinguishable from a failed probe.
         popup.pluginsLoading = false
-        popup.probeWatchdog.running = false
+        probeWatchdog.running = false
         if (exitCode !== 0) {
           var note = popup.pluginProbeError || "omarchy plugin list failed"
           if (popup.plugins.length === 0

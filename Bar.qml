@@ -342,8 +342,9 @@ Item {
     api.barSize = Qt.binding(function() { return root.barSize })
     api.transparent = Qt.binding(function() { return root.transparent })
     api.foregroundAnimationEnabled = Qt.binding(function() { return root.foregroundAnimationEnabled })
-    api.centerSectionRevealHeld = Qt.binding(function() { return root.centerSectionRevealHeld })
-    api._centerHoverRevealSuppressed = Qt.binding(function() { return root.centerHoverRevealSuppressed })
+    // Upstream c149add removed centerSectionRevealHeld and
+    // _centerHoverRevealSuppressed from PluginBarApi; the fork's own peek
+    // properties stay, they are just no longer exposed on the api.
     api.traySectionDragActive = Qt.binding(function() { return root.traySectionDragActive })
     api.traySectionPopoutOpen = Qt.binding(function() { return root.traySectionPopoutOpen })
     root.syncPluginBarApiObjects(api)
@@ -487,10 +488,7 @@ Item {
         return String(requestedId || "") === String(moduleName || "")
           ? root.moduleWidgets(moduleName) : []
       },
-      _run: function(command) { root.run(command) },
-      _setCenterHoverRevealSuppressed: function(value) {
-        root.centerHoverRevealSuppressed = !!value
-      }
+      _run: function(command) { root.run(command) }
     })
     if (!api) return null
     root.bindPluginBarApi(api)
@@ -3079,6 +3077,8 @@ Item {
     readonly property bool dragSource: !!owner && owner.dragSource
     // The edge it grows from, as the slot that last held it says.
     property string fixedEdge: "center"
+    // Whether that slot is in the tray's drawer.
+    property bool inTraySection: false
     readonly property string moduleName: root.entryId(entry)
     readonly property var moduleSettings: root.entrySettings(entry)
     readonly property string customType: root.customModuleType(entry)
@@ -3126,6 +3126,7 @@ Item {
         return
       }
       fixedEdge = owner.fixedEdge
+      inTraySection = owner.region === "tray"
       placed = true
     }
     // One no slot takes up again by the time the update is over, as one in
@@ -3184,6 +3185,7 @@ Item {
     onActiveItemChanged: Qt.callLater(injectProps)
     onModuleSettingsChanged: injectProps()
     onFixedEdgeChanged: injectProps()
+    onInTraySectionChanged: injectProps()
 
     function injectProps() {
       var target = activeItem
@@ -3191,6 +3193,7 @@ Item {
       // Ahead of bar: a widget can start laying itself out the moment it has
       // a bar, as the indicators do by reporting which are already active.
       if ("fixedEdge" in target) target.fixedEdge = fixedEdge
+      if ("inTraySection" in target) target.inTraySection = inTraySection
       if ("bar" in target) target.bar = firstParty
         ? root : root.pluginBarApiFor(pluginApiId, moduleName, registered)
       if ("moduleName" in target) target.moduleName = moduleName
