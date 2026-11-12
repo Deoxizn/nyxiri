@@ -45,6 +45,47 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
 
 ## Install
 
+One command installs the bar and its widgets:
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)
+```
+
+Fish has no process substitution, so wrap it:
+
+```sh
+bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)'
+```
+
+That installs, in order:
+
+- **devi.nyxiri** — the bar (this repo).
+- **devi.nyxiri-menu** — the Omarchy menu entry, under Appearance.
+- **devi.nyxiri-workspaces** — the workspaces widget (see below).
+- **deoxizn.clock** — the clock widget, with a calendar panel.
+- **devi.weather** — the weather widget, 10-day forecast plus a second city.
+- **devi.arch-updates** — repo, AUR, mise and git plugin/theme update counts.
+
+Add `--with-cats` to also install the cat widgets, **deoxizn.cpurr**
+and **deoxizn.bongocat**. They are fun, not core, so they are opt-in.
+
+Everything goes through `omarchy plugin add --enable --yes`, so no
+prompts. Already-installed plugins are skipped, never removed or
+re-added, so re-running the installer is safe. It then sets the bar
+(`omarchy bar use devi.nyxiri`), puts the widgets on it (menu first,
+then workspaces, so the trigger glyph sits before the workspace
+numbers on the left), and restarts the shell.
+
+**devi.wallcraft** is deliberately not included: it is a background
+service whose settings work without the bar, so it stays an independent
+install:
+
+```sh
+omarchy plugin add https://github.com/Deoxizn/wallcraft.git --enable
+```
+
+To install pieces by hand instead:
+
 ```sh
 omarchy plugin add https://github.com/Deoxizn/nyxiri.git --enable
 omarchy plugin add https://github.com/Deoxizn/nyxiri-menu.git --enable
@@ -202,6 +243,43 @@ widget's `ranges` setting. Its settings live on the widget's own layout
 entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
 tab edits them while the widget is on the bar. It is optional; Nyxiri
 works with the stock workspaces widget too.
+
+## Clock widget
+
+The separate [omarchy-clock](https://github.com/Deoxizn/omarchy-clock)
+plugin replaces the stock clock with one whose hover shows today's
+calendar events (timed with start times, all-day as a count, multi-day
+as "ongoing") instead of the version stamp. It reads Google Calendar
+through the private "Secret address in iCal format" URL in
+`~/.config/deoxizn.clock/calendars.json` (chmod 600; never share the
+secret URL). It is optional; Nyxiri works with the stock clock too.
+
+## Weather widget
+
+The separate [omarchy-weather](https://github.com/Deoxizn/omarchy-weather)
+plugin is a weather pill with a detail popup. The main location is
+automatic (geo.omarchy.org IP lookup, wttr.in fallback), or pinned with
+`omarchy weather location --set`. The popup shows a 10-day forecast in
+one horizontal row, and a second city under it (set in the card's
+Appearance tab, WEATHER section, as a name like `Tucson` or `lat,lon`).
+It is optional; Nyxiri works with the stock weather widget too.
+
+## Arch updates widget
+
+The separate [Arch-Updates](https://github.com/Deoxizn/Arch-Updates)
+plugin counts repo, AUR, mise, and git plugin/theme updates, with a
+hover tooltip listing packages vertically per category, old to new
+versions. Left-click runs the updater, middle-click refreshes. It is
+optional.
+
+## Cat widgets
+
+The separate [omarchy-cpurr](https://github.com/Deoxizn/omarchy-cpurr)
+and [omarchy-bongocat](https://github.com/Deoxizn/omarchy-bongocat)
+plugins are fun, not core. cpurr is a sleeping cat when idle and a
+running cat scaling with CPU load; Bongo Cat taps along to keystrokes
+and audio. Both are opt-in with the installer's `--with-cats` flag.
+They are optional.
 
 ## How it works
 

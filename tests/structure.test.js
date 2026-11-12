@@ -338,3 +338,17 @@ test("the all-in-one installer covers the suite, cats optional, wallcraft out", 
   assert.ok(install.indexOf('put devi.nyxiri-menu left') < install.indexOf('put devi.nyxiri-workspaces left'))
   assert.match(install, /omarchy restart shell/)
 })
+
+test("the README lists the installer and every plugin in the suite", () => {
+  const readme = read("README.md")
+  // The all-in-one installer is the install method.
+  assert.match(readme, /scripts\/install-all\.sh/)
+  assert.match(readme, /--with-cats/)
+  // Every plugin the suite now includes, not just bar/menu/workspaces.
+  for (const id of ["devi.nyxiri", "devi.nyxiri-menu", "devi.nyxiri-workspaces", "deoxizn.clock", "devi.weather", "devi.arch-updates", "deoxizn.cpurr", "deoxizn.bongocat"]) {
+    assert.match(readme, new RegExp(id.replace(".", "\\.")))
+  }
+  // Wallcraft is called out as a separate, independent install.
+  assert.match(readme, /devi\.wallcraft/)
+  assert.match(readme, /not included/)
+})
