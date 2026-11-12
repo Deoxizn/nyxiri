@@ -825,6 +825,44 @@ KeyboardPanel {
               onCommit: function(value) { popup.setMenu({ iconSource: value }) }
             }
 
+            // Wordmark presets are one-tap fills of the same field: the
+            // widget renders every wordmark uppercased with wide
+            // letterspacing, Shibumi-preview style, so the presets are
+            // canned strings, not image assets. Custom text still works.
+            Text {
+              visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
+              text: "Wordmark"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+            }
+
+            Row {
+              visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
+              width: body.width
+              spacing: Style.spacing.xs
+
+              Repeater {
+                model: [
+                  { value: "Arch", label: "Arch" },
+                  { value: "Hyprland", label: "Hyprland" },
+                  { value: "Nyxiri", label: "Nyxiri" },
+                  { value: "Omarchy", label: "Omarchy" }
+                ]
+
+                delegate: Button {
+                  required property var modelData
+                  width: (parent.width - parent.spacing * 3) / 4
+                  text: modelData.label
+                  selected: String(popup.menuSetting("wordmark", "Nyxiri")).toUpperCase() === modelData.value.toUpperCase()
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setMenu({ wordmark: modelData.value })
+                }
+              }
+            }
+
             FocusField {
               visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
               width: body.width

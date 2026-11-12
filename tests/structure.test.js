@@ -117,6 +117,20 @@ test("text fields commit as you type instead of only on Enter", () => {
   assert.doesNotMatch(settings, /onEditingFinished: popup\.setMenu\(/)
 })
 
+test("the menu wordmark has presets above the custom field", () => {
+  const settings = read("NyxiriSettings.qml")
+  // Presets are one-tap fills of the same field: the widget renders every
+  // wordmark uppercased with wide letterspacing, so the presets are canned
+  // strings, not image assets.
+  assert.match(settings, /text: "Wordmark"/)
+  assert.match(settings, /\{ value: "Arch", label: "Arch" \}/)
+  assert.match(settings, /\{ value: "Hyprland", label: "Hyprland" \}/)
+  assert.match(settings, /\{ value: "Nyxiri", label: "Nyxiri" \}/)
+  assert.match(settings, /\{ value: "Omarchy", label: "Omarchy" \}/)
+  assert.match(settings, /onClicked: popup\.setMenu\(\{ wordmark: modelData\.value \}\)/)
+  assert.match(settings, /String\(popup\.menuSetting\("wordmark", "Nyxiri"\)\)\.toUpperCase\(\)/)
+})
+
 test("the menu trigger uses choice rows, not dropdowns", () => {
   const settings = read("NyxiriSettings.qml")
   // Dropdown popups are clipped by the card's window, so the Custom
