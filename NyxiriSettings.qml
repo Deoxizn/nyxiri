@@ -1108,6 +1108,16 @@ KeyboardPanel {
               onClicked: popup.setWorkspaces({ hideEmpty: !checked })
             }
 
+            Toggle {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              label: "Cycle layout on click"
+              description: "Clicking the workspace you're already on switches tiling, scrolling, floating. Turn it off if a double-click keeps changing your layout."
+              checked: popup.workspacesSetting("cycleLayoutOnClick", true) === true || popup.workspacesSetting("cycleLayoutOnClick", true) === "true"
+              foreground: popup.bar.foreground
+              onClicked: popup.setWorkspaces({ cycleLayoutOnClick: !checked })
+            }
+
             // Classic workspaces is a Hyprland mode, not a widget setting:
             // the toggle runs the workspaces plugin's bin/mode, which flips
             // the flag and reloads Hyprland. The ranges field pins which

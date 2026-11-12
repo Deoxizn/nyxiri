@@ -295,6 +295,19 @@ test("the settings card has a weather secondary-location field", () => {
   assert.match(settings, /A second city shown under the main forecast/)
 })
 
+test("the settings card has a cycle-layout-on-click toggle", () => {
+  const settings = read("NyxiriSettings.qml")
+  // Clicking the focused workspace cycles tiling / scrolling / floating;
+  // the toggle turns that off, so a double-click to focus a workspace
+  // can't change the layout. Same string-"true" read as hideEmpty, on
+  // by default.
+  assert.match(settings, /label: "Cycle layout on click"/)
+  assert.match(settings, /popup\.workspacesSetting\("cycleLayoutOnClick", true\)/)
+  assert.match(settings, /popup\.workspacesSetting\("cycleLayoutOnClick", true\) === "true"/)
+  assert.match(settings, /popup\.setWorkspaces\(\{ cycleLayoutOnClick: !checked \}\)/)
+  assert.match(settings, /switches tiling, scrolling, floating/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)
