@@ -264,6 +264,12 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
   // hint stays hidden.
   assert.match(settings, /text: "Modes really only for 4\.5"/)
   assert.match(settings, /visible: popup\.bar\.nyxiriWorkspacesAvailable && popup\.classicMode && popup\.workspacesSetting\("ranges", ""\) !== ""/)
+  // Hide empty is a no-op while Mode is Active only (Active already
+  // shows just the focused workspace), so the toggle greys out there
+  // and says why instead of silently doing nothing.
+  assert.match(settings, /label: "Hide empty workspaces"/)
+  assert.match(settings, /enabled: popup\.workspacesSetting\("mode", "10"\) !== "active"/)
+  assert.match(settings, /description: popup\.workspacesSetting\("mode", "10"\) === "active" \? "Does nothing while Mode is Active only" : "Drops workspaces with no windows; the focused one always stays"/)
 })
 
 test("upstream snapshots are present", () => {

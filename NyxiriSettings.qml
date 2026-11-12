@@ -1055,8 +1055,9 @@ KeyboardPanel {
               visible: popup.bar.nyxiriWorkspacesAvailable
               width: body.width
               label: "Hide empty workspaces"
-              description: "Drops workspaces with no windows; the focused one always stays"
+              description: popup.workspacesSetting("mode", "10") === "active" ? "Does nothing while Mode is Active only" : "Drops workspaces with no windows; the focused one always stays"
               checked: popup.workspacesSetting("hideEmpty", false) === true
+              enabled: popup.workspacesSetting("mode", "10") !== "active"
               foreground: popup.bar.foreground
               onClicked: popup.setWorkspaces({ hideEmpty: !checked })
             }
