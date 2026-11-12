@@ -127,6 +127,30 @@ KeyboardPanel {
     popup.bar.writeWorkspacesSettings(patch)
   }
 
+  // ---------------------------------------------------------------- classic
+
+  // Classic workspaces mode, read from the workspaces plugin's bin/mode.
+  // The mode is Hyprland state, not a widget setting, so the card asks the
+  // script instead of reading the layout entry. The script runs through
+  // bash: pushes land mode 644, so it never runs directly.
+  readonly property string classicModeScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/devi.nyxiri-workspaces/bin/mode"
+  property bool classicMode: false
+  property bool classicModeKnown: false
+  property bool classicSwitching: false
+
+  function refreshClassicMode() {
+    if (modeStatus.running) return
+    modeStatus.command = ["bash", popup.classicModeScript, "status"]
+    modeStatus.running = true
+  }
+
+  function switchClassic(classic) {
+    if (modeSwitch.running || popup.classicSwitching) return
+    popup.classicSwitching = true
+    modeSwitch.command = ["bash", popup.classicModeScript, classic ? "classic" : "4.5"]
+    modeSwitch.running = true
+  }
+
   // ---------------------------------------------------------------- plugins
 
   function parsePlugins(text) {
@@ -245,10 +269,14 @@ KeyboardPanel {
     if (open) {
       tab = initialTab
       refreshPlugins()
+      refreshClassicMode()
     }
   }
   onInitialTabChanged: if (open) tab = initialTab
-  onTabChanged: if (tab === "widgets" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
+  onTabChanged: {
+    if (tab === "widgets" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
+    if (tab === "workspaces") refreshClassicMode()
+  }
 
   // This was a PopupCard (xdg-popup) and its text fields never took input:
   // xdg-popups only receive keys after a click routes focus through their
@@ -409,6 +437,35 @@ KeyboardPanel {
       onExited: function(exitCode) {
         if (exitCode !== 0) popup.lastAction = "Command failed"
         popup.refreshPlugins()
+      }
+    }
+
+    // Classic workspaces mode: `bin/mode status` prints "classic" or
+    // "4.5". The switch reloads Hyprland (a second or two), so the toggle
+    // stays disabled until the status comes back and confirms the new mode.
+    Process {
+      id: modeStatus
+      stdout: StdioCollector {
+        waitForEnd: true
+        onStreamFinished: {
+          var mode = String(text || "").trim()
+          if (mode === "classic" || mode === "4.5") {
+            popup.classicMode = mode === "classic"
+            popup.classicModeKnown = true
+          }
+        }
+      }
+      stderr: StdioCollector { waitForEnd: true }
+    }
+
+    Process {
+      id: modeSwitch
+      stdout: StdioCollector { waitForEnd: true }
+      stderr: StdioCollector { waitForEnd: true }
+      onExited: function(exitCode) {
+        popup.classicSwitching = false
+        if (exitCode !== 0) popup.lastAction = "Workspace mode switch failed"
+        popup.refreshClassicMode()
       }
     }
 
@@ -989,6 +1046,41 @@ KeyboardPanel {
               checked: popup.workspacesSetting("hideEmpty", false) === true
               foreground: popup.bar.foreground
               onClicked: popup.setWorkspaces({ hideEmpty: !checked })
+            }
+
+            // Classic workspaces is a Hyprland mode, not a widget setting:
+            // the toggle runs the workspaces plugin's bin/mode, which flips
+            // the flag and reloads Hyprland. The ranges field pins which
+            // workspaces each monitor shows while classic is on.
+            Toggle {
+              visible: popup.bar.nyxiriWorkspacesAvailable
+              width: body.width
+              label: "Classic workspaces"
+              description: popup.classicSwitching ? "Switching…" : popup.classicMode ? "One global set 1-10, as in Omarchy 4.0.6" : "Omarchy 4.5: each monitor has its own 1-10"
+              checked: popup.classicMode
+              enabled: popup.classicModeKnown && !popup.classicSwitching
+              foreground: popup.bar.foreground
+              onClicked: popup.switchClassic(!checked)
+            }
+
+            Text {
+              visible: popup.bar.nyxiriWorkspacesAvailable && popup.classicMode
+              text: "Workspaces per monitor"
+              color: Qt.darker(popup.bar.foreground, 1.4)
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.caption
+              font.bold: true
+            }
+
+            FocusField {
+              visible: popup.bar.nyxiriWorkspacesAvailable && popup.classicMode
+              width: body.width
+              settingText: popup.workspacesSetting("ranges", "")
+              placeholderText: "DP-1:1-5,HDMI-A-1:6-10"
+              foreground: popup.bar.foreground
+              font.family: popup.bar.fontFamily
+              font.pixelSize: Style.font.body
+              onCommit: function(value) { popup.setWorkspaces({ ranges: value }) }
             }
 
             // App icon size only matters for the Apps style, so the slider

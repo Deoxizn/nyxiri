@@ -170,8 +170,9 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
   opacity, border width, island padding, bar surface and bar background
   opacity.
 - **Monitors** — per-monitor bar toggle and widget rules.
-- **Workspaces** — mode, marker style and hide-empty for the Nyxiri
-  workspaces widget, shown while that widget is on the bar.
+- **Workspaces** — mode, marker style, hide-empty, and the Classic
+  workspaces toggle with per-monitor ranges, for the Nyxiri workspaces
+  widget, shown while that widget is on the bar.
 - **Widgets** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
   the official `omarchy` CLI, so behaviour matches the menu. The list sorts
@@ -193,7 +194,11 @@ The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a
 The separate [nyxiri-workspaces](https://github.com/Deoxizn/nyxiri-workspaces)
 plugin replaces the stock workspaces widget with one the bar can style:
 eight marker styles (numbers, kanji, Pac-Man/ghost, dots, magic, default,
-aurora, apps), a Ten / Five / Active only mode, and hide-empty. Its settings live on the widget's own layout
+aurora, apps), a Ten / Five / Active only mode, and hide-empty. It also
+carries a Classic workspaces mode (one global set 1-10, as in Omarchy
+4.0.6, with per-monitor ranges like `DP-1:1-5,HDMI-A-1:6-10`); the card's
+toggle runs the plugin's `bin/mode` and the ranges field writes the
+widget's `ranges` setting. Its settings live on the widget's own layout
 entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
 tab edits them while the widget is on the bar. It is optional; Nyxiri
 works with the stock workspaces widget too.

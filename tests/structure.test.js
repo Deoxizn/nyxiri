@@ -241,6 +241,25 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   assert.doesNotMatch(settings, /setWorkspaces\(\{ style: value \}\)/)
 })
 
+test("the settings card has a classic workspaces toggle and a per-monitor ranges field", () => {
+  const settings = read("NyxiriSettings.qml")
+  // The mode is Hyprland state, not a widget setting: the card asks the
+  // workspaces plugin's bin/mode, through bash (pushes land mode 644).
+  assert.match(settings, /devi\.nyxiri-workspaces\/bin\/mode/)
+  assert.match(settings, /\["bash", popup\.classicModeScript, "status"\]/)
+  assert.match(settings, /\["bash", popup\.classicModeScript, classic \? "classic" : "4\.5"\]/)
+  assert.match(settings, /label: "Classic workspaces"/)
+  assert.match(settings, /onClicked: popup\.switchClassic\(!checked\)/)
+  assert.match(settings, /refreshClassicMode\(\)/)
+  // The ranges field only shows while classic is on, and writes back
+  // through the workspaces settings like every other field.
+  assert.match(settings, /visible: popup\.bar\.nyxiriWorkspacesAvailable && popup\.classicMode/)
+  assert.match(settings, /text: "Workspaces per monitor"/)
+  assert.match(settings, /placeholderText: "DP-1:1-5,HDMI-A-1:6-10"/)
+  assert.match(settings, /popup\.workspacesSetting\("ranges", ""\)/)
+  assert.match(settings, /popup\.setWorkspaces\(\{ ranges: value \}\)/)
+})
+
 test("upstream snapshots are present", () => {
   for (const name of ["upstream/Bar.qml", "upstream/BarModel.js", "upstream/bar-manifest.json"]) {
     assert.ok(fs.existsSync(path.join(root, name)), name)
