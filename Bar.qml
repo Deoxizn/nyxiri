@@ -202,7 +202,7 @@ Item {
     var name = screenName ? String(screenName) : focusedScreenName()
     if (!name) return false
     var wanted = String(tab || "")
-    nyxiriSettingsTab = ["appearance", "monitors", "widgets"].indexOf(wanted) === -1 ? "appearance" : wanted
+    nyxiriSettingsTab = ["appearance", "monitors", "plugins"].indexOf(wanted) === -1 ? "appearance" : wanted
     nyxiriSettingsScreen = name
     nyxiriSettingsOpen = true
     return true

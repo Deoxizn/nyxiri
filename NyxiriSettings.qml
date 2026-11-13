@@ -76,6 +76,11 @@ KeyboardPanel {
     return n
   }
 
+  // The Plugins tab groups the sorted list under Active / Disabled
+  // headings, so each group is its own model.
+  readonly property var activePluginList: popup.sortedPlugins.filter(function(p) { return p.enabled === true })
+  readonly property var disabledPluginList: popup.sortedPlugins.filter(function(p) { return p.enabled !== true })
+
   // ---------------------------------------------------------------- writes
 
   function setSection(section, mode) {
@@ -282,7 +287,7 @@ KeyboardPanel {
   }
   onInitialTabChanged: if (open) tab = initialTab
   onTabChanged: {
-    if (tab === "widgets" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
+    if (tab === "plugins" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
     if (tab === "workspaces") refreshClassicMode()
   }
 
@@ -522,7 +527,7 @@ KeyboardPanel {
           { value: "appearance", label: "Appearance" },
           { value: "monitors", label: "Monitors" },
           { value: "workspaces", label: "Workspaces" },
-          { value: "widgets", label: "Widgets" }
+          { value: "plugins", label: "Plugins" }
         ]
 
         delegate: Button {
@@ -1310,9 +1315,9 @@ KeyboardPanel {
             }
           }
 
-          // --------------------------------------------------------- widgets
+          // --------------------------------------------------------- plugins
           Column {
-            visible: popup.tab === "widgets"
+            visible: popup.tab === "plugins"
             width: parent.width
             spacing: Style.spacing.sm
 
@@ -1354,92 +1359,117 @@ KeyboardPanel {
               font.pixelSize: Style.font.caption
             }
 
-            Repeater {
-              model: popup.sortedPlugins
+            // A space, then the active plugins under an Active heading,
+            // a space, then the disabled ones under Disabled. The row is
+            // one component used by both Repeaters, so a row change lands
+            // in both groups.
+            Item { width: 1; height: Style.spacing.sm; visible: popup.plugins.length > 0 }
 
-              delegate: Column {
-                id: pluginRow
-                required property var modelData
-                readonly property bool listed: popup.inBar(modelData)
-                // Entries whose kinds are missing or unrecognised still get
-                // a row: the tab once showed nothing at all while the list
-                // was provably non-empty, because every row hid behind a
-                // kinds check. A plugin row is always useful (name, toggle);
-                // only "Add to bar" stays widget-gated.
-                readonly property bool rowShown: popup.isBarWidget(pluginRow.modelData)
-                  || popup.kindList(pluginRow.modelData).length === 0
+            component PluginRow: Column {
+              required property var modelData
+              readonly property bool listed: popup.inBar(modelData)
+              // Entries whose kinds are missing or unrecognised still get
+              // a row: the tab once showed nothing at all while the list
+              // was provably non-empty, because every row hid behind a
+              // kinds check. A plugin row is always useful (name, toggle);
+              // only "Add to bar" stays widget-gated.
+              readonly property bool rowShown: popup.isBarWidget(modelData)
+                || popup.kindList(modelData).length === 0
 
-                width: body.width
-                spacing: Style.spacing.xxs
+              width: body.width
+              spacing: Style.spacing.xxs
 
-                Row {
-                  width: parent.width
-                  spacing: Style.spacing.sm
-                  visible: pluginRow.rowShown
+              Row {
+                width: parent.width
+                spacing: Style.spacing.sm
+                visible: rowShown
 
-                  Column {
-                    width: parent.width - pluginToggle.width - parent.spacing
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Style.spacing.xxs
-
-                    BodyText {
-                      text: String(pluginRow.modelData.name || pluginRow.modelData.id || "")
-                      width: parent.width
-                      elide: Text.ElideRight
-                    }
-                    BodyText {
-                      text: String(pluginRow.modelData.id || "") + (pluginRow.listed ? " · on the bar" : "")
-                      color: Qt.darker(popup.bar.foreground, 1.45)
-                      font.pixelSize: Style.font.caption
-                      width: parent.width
-                      elide: Text.ElideRight
-                    }
-                  }
-
-                  ToggleSwitch {
-                    id: pluginToggle
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: pluginRow.modelData.enabled === true
-                    enabled: pluginRow.modelData.canDisable !== false
-                    foreground: popup.bar.foreground
-                    onToggled: popup.setEnabled(pluginRow.modelData, pluginRow.modelData.enabled !== true)
-                  }
-                }
-
-                Row {
-                  width: parent.width
-                  spacing: Style.spacing.xs
-                  visible: pluginRow.rowShown && pluginRow.modelData.enabled === true && !pluginRow.listed
-
-                  Button {
-                    text: "Add to bar"
-                    bordered: true
-                    foreground: popup.bar.foreground
-                    onClicked: popup.addToBar(pluginRow.modelData)
-                  }
-                }
-
-                Row {
-                  width: parent.width
-                  spacing: Style.spacing.xs
-                  visible: popup.isBarOption(pluginRow.modelData)
+                Column {
+                  width: parent.width - pluginToggle.width - parent.spacing
+                  anchors.verticalCenter: parent.verticalCenter
+                  spacing: Style.spacing.xxs
 
                   BodyText {
-                    text: "Bar option"
-                    width: parent.width - useBarButton.width - parent.spacing
-                    anchors.verticalCenter: parent.verticalCenter
+                    text: String(modelData.name || modelData.id || "")
+                    width: parent.width
                     elide: Text.ElideRight
                   }
-
-                  Button {
-                    id: useBarButton
-                    text: "Use as bar"
-                    bordered: true
-                    foreground: popup.bar.foreground
-                    onClicked: popup.useAsBar(pluginRow.modelData)
+                  BodyText {
+                    text: String(modelData.id || "") + (listed ? " · on the bar" : "")
+                    color: Qt.darker(popup.bar.foreground, 1.45)
+                    font.pixelSize: Style.font.caption
+                    width: parent.width
+                    elide: Text.ElideRight
                   }
                 }
+
+                ToggleSwitch {
+                  id: pluginToggle
+                  anchors.verticalCenter: parent.verticalCenter
+                  checked: modelData.enabled === true
+                  enabled: modelData.canDisable !== false
+                  foreground: popup.bar.foreground
+                  onToggled: popup.setEnabled(modelData, modelData.enabled !== true)
+                }
               }
+
+              Row {
+                width: parent.width
+                spacing: Style.spacing.xs
+                visible: rowShown && modelData.enabled === true && !listed
+
+                Button {
+                  text: "Add to bar"
+                  bordered: true
+                  foreground: popup.bar.foreground
+                  onClicked: popup.addToBar(modelData)
+                }
+              }
+
+              Row {
+                width: parent.width
+                spacing: Style.spacing.xs
+                visible: popup.isBarOption(modelData)
+
+                BodyText {
+                  text: "Bar option"
+                  width: parent.width - useBarButton.width - parent.spacing
+                  anchors.verticalCenter: parent.verticalCenter
+                  elide: Text.ElideRight
+                }
+
+                Button {
+                  id: useBarButton
+                  text: "Use as bar"
+                  bordered: true
+                  foreground: popup.bar.foreground
+                  onClicked: popup.useAsBar(modelData)
+                }
+              }
+            }
+
+            SectionLabel {
+              text: "ACTIVE"
+              visible: popup.activePluginList.length > 0
+              width: body.width
+            }
+
+            Repeater {
+              model: popup.activePluginList
+              delegate: PluginRow {}
+            }
+
+            Item { width: 1; height: Style.spacing.sm; visible: popup.activePluginList.length > 0 && popup.disabledPluginList.length > 0 }
+
+            SectionLabel {
+              text: "DISABLED"
+              visible: popup.disabledPluginList.length > 0
+              width: body.width
+            }
+
+            Repeater {
+              model: popup.disabledPluginList
+              delegate: PluginRow {}
             }
 
             Row {
@@ -1458,7 +1488,7 @@ KeyboardPanel {
         }
       }
 
-      // A visible scrollbar for the one shared scroll area: the Widgets
+      // A visible scrollbar for the one shared scroll area: the Plugins
       // tab (and Appearance/Monitors on a short screen) overflows the
       // 430px viewport, and a wheel-only scroll gives no hint there is
       // more. It shows only when the active tab actually overflows, so
@@ -1513,7 +1543,7 @@ KeyboardPanel {
 
     BodyText {
       width: parent.width
-      visible: popup.tab === "widgets" && popup.plugins.length === 0 && !popup.pluginsLoading
+      visible: popup.tab === "plugins" && popup.plugins.length === 0 && !popup.pluginsLoading
       text: "No plugins reported. Is `omarchy plugin list` available?"
       color: Qt.darker(popup.bar.foreground, 1.45)
       font.pixelSize: Style.font.caption

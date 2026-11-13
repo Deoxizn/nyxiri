@@ -29,7 +29,7 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
     <td><img src="preview3.png" width="280" alt="Settings card, Workspaces tab"></td>
   </tr>
   <tr>
-    <td><img src="preview4.png" width="280" alt="Settings card, Widgets tab"></td>
+    <td><img src="preview4.png" width="280" alt="Settings card, Plugins tab"></td>
     <td><img src="preview5.png" width="280" alt="Menu, Appearance section with Nyxiri"></td>
     <td><img src="preview6.png" width="280" alt="Menu, Nyxiri submenu"></td>
   </tr>
@@ -41,7 +41,7 @@ Nyxiri is a plugin. It does not fork the shell and touches nothing under
 
 - Omarchy with the Quickshell-based shell (`/usr/share/omarchy/shell`).
 - `omarchy-shell` on `PATH` for the settings IPC.
-- `omarchy plugin` for the Widgets tab (enable/disable and bar options).
+- `omarchy plugin` for the Plugins tab (enable/disable and bar options).
 
 ## Install
 
@@ -214,14 +214,14 @@ The card is a `PopupCard` centered under the bar. Its tabs are:
 - **Workspaces** — mode, marker style, hide-empty, and the Classic
   workspaces toggle with per-monitor ranges, for the Nyxiri workspaces
   widget, shown while that widget is on the bar.
-- **Widgets** — enable/disable installed plugins, add one to the bar, use a bar
+- **Plugins** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
-  the official `omarchy` CLI, so behaviour matches the menu. The list sorts
-  active plugins first, then disabled, each group alphabetical, and the
+  the official `omarchy` CLI, so behaviour matches the menu. The list is
+  grouped under Active and Disabled headings, each group alphabetical, and the
   header counts both (`52 plugins · 18 active`).
 
 A tab whose content is taller than the card shows a scrollbar on the right
-edge (Widgets, and Appearance or Monitors on a short screen); drag it or
+edge (Plugins, and Appearance or Monitors on a short screen); drag it or
 scroll with the wheel.
 
 ## Menu integration

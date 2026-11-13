@@ -158,17 +158,19 @@ test("the settings card shows a scrollbar when a tab overflows", () => {
   assert.match(settings, /onPressed: function\(mouse\) \{ scrollBar\.scrollTo\(mouse\.y\) \}/)
 })
 
-test("the widgets tab shows a row for every plugin even when kinds are unknown", () => {
+test("the plugins tab shows a row for every plugin even when kinds are unknown", () => {
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /rowShown/)
-  assert.match(settings, /kindList\(pluginRow\.modelData\)\.length === 0/)
+  assert.match(settings, /kindList\(modelData\)\.length === 0/)
   assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
 })
 
-test("the widgets tab sorts active plugins first, then disabled, each alphabetical", () => {
+test("the plugins tab sorts active plugins first, then disabled, each alphabetical", () => {
   const settings = read("NyxiriSettings.qml")
   assert.match(settings, /readonly property var sortedPlugins/)
-  assert.match(settings, /model: popup\.sortedPlugins/)
+  assert.match(settings, /model: popup\.activePluginList/)
+  assert.match(settings, /model: popup\.disabledPluginList/)
+  assert.doesNotMatch(settings, /model: popup\.sortedPlugins/)
   assert.match(settings, /var ae = a\.enabled === true \? 0 : 1/)
   assert.match(settings, /String\(a\.name \|\| a\.id \|\| ""\)\.toLowerCase\(\)/)
 })
@@ -436,4 +438,27 @@ test("the monitors tab shows the short app id, not the full plugin id", () => {
   // Selection and toggling still use the full layout key.
   assert.match(settings, /selected: popup\.ruleContains\(monitorCard\.monitorName, modelData\)/)
   assert.match(settings, /onClicked: popup\.toggleRule\(monitorCard\.monitorName, modelData\)/)
+})
+
+test("the Widgets tab is now the Plugins tab, grouped under Active and Disabled", () => {
+  const settings = read("NyxiriSettings.qml")
+  // Tab renamed.
+  assert.match(settings, /\{ value: "plugins", label: "Plugins" \}/)
+  assert.doesNotMatch(settings, /\{ value: "widgets", label: "Widgets" \}/)
+  assert.match(settings, /visible: popup\.tab === "plugins"/)
+  assert.doesNotMatch(settings, /popup\.tab === "widgets"/)
+  // The tab validates the new value.
+  assert.match(read("Bar.qml"), /\["appearance", "monitors", "plugins"\]/)
+  // Active / Disabled groups, each its own model from the sorted list.
+  assert.match(settings, /activePluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled === true \}\)/)
+  assert.match(settings, /disabledPluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled !== true \}\)/)
+  assert.match(settings, /text: "ACTIVE"/)
+  assert.match(settings, /text: "DISABLED"/)
+  assert.match(settings, /model: popup\.activePluginList/)
+  assert.match(settings, /model: popup\.disabledPluginList/)
+  // One shared row component, not two copies of the delegate.
+  assert.match(settings, /component PluginRow: Column/)
+  assert.match(settings, /delegate: PluginRow \{\}/)
+  // The count line still sits above the groups.
+  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
 })
