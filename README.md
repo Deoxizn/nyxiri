@@ -14,7 +14,7 @@ Nyxiri is a drop-in **bar plugin** for the Omarchy shell. It keeps the upstream
 Settings live in an in-bar card, opened by right-clicking the bar or with:
 
 ```sh
-omarchy-shell devi.nyxiri openSettings
+omarchy-shell pizza.dirty.nyxiri openSettings
 ```
 
 Nyxiri is a plugin. It does not fork the shell and touches nothing under
@@ -59,24 +59,24 @@ bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main
 
 That installs, in order:
 
-- [**devi.nyxiri**](https://github.com/Deoxizn/nyxiri) — the bar (this repo).
-- [**devi.nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu entry, under Appearance.
-- [**devi.nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) — the workspaces widget (see below).
-- [**deoxizn.clock**](https://github.com/Deoxizn/omarchy-clock) — the clock widget, with a calendar panel.
-- [**devi.weather**](https://github.com/Deoxizn/omarchy-weather) — the weather widget, 10-day forecast plus a second city.
-- [**devi.arch-updates**](https://github.com/Deoxizn/Arch-Updates) — repo, AUR, mise and git plugin/theme update counts.
+- [**pizza.dirty.nyxiri**](https://github.com/Deoxizn/nyxiri) — the bar (this repo).
+- [**pizza.dirty.nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu entry, under Appearance.
+- [**pizza.dirty.nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) — the workspaces widget (see below).
+- [**pizza.dirty.clock**](https://github.com/Deoxizn/omarchy-clock) — the clock widget, with a calendar panel.
+- [**pizza.dirty.weather**](https://github.com/Deoxizn/omarchy-weather) — the weather widget, 10-day forecast plus a second city.
+- [**pizza.dirty.arch-updates**](https://github.com/Deoxizn/Arch-Updates) — repo, AUR, mise and git plugin/theme update counts.
 
-Add `--with-cats` to also install the cat widgets, [**deoxizn.cpurr**](https://github.com/Deoxizn/omarchy-cpurr)
-and [**deoxizn.bongocat**](https://github.com/Deoxizn/omarchy-bongocat). They are fun, not core, so they are opt-in.
+Add `--with-cats` to also install the cat widgets, [**pizza.dirty.cpurr**](https://github.com/Deoxizn/omarchy-cpurr)
+and [**pizza.dirty.bongocat**](https://github.com/Deoxizn/omarchy-bongocat). They are fun, not core, so they are opt-in.
 
 Everything goes through `omarchy plugin add --enable --yes`, so no
 prompts. Already-installed plugins are skipped, never removed or
 re-added, so re-running the installer is safe. It then sets the bar
-(`omarchy bar use devi.nyxiri`), puts the widgets on it (menu first,
+(`omarchy bar use pizza.dirty.nyxiri`), puts the widgets on it (menu first,
 then workspaces, so the trigger glyph sits before the workspace
 numbers on the left), and restarts the shell.
 
-**devi.wallcraft** is deliberately not included: it is a background
+**pizza.dirty.wallcraft** is deliberately not included: it is a background
 service whose settings work without the bar, so it stays an independent
 install:
 
@@ -91,8 +91,8 @@ omarchy plugin add https://github.com/Deoxizn/nyxiri.git --enable
 omarchy plugin add https://github.com/Deoxizn/nyxiri-menu.git --enable
 omarchy plugin add https://github.com/Deoxizn/nyxiri-workspaces.git --enable
 omarchy-shell shell rescanPlugins
-omarchy bar use devi.nyxiri
-omarchy bar put devi.nyxiri-workspaces
+omarchy bar use pizza.dirty.nyxiri
+omarchy bar put pizza.dirty.nyxiri-workspaces
 ```
 
 The workspaces widget is optional: put it where the old workspaces widget
@@ -102,7 +102,7 @@ was and remove that one from the bar.
 `omarchy plugin update` works), validates the manifest, and `--enable`
 switches the plugin on. `scripts/install.sh` in this repo is just a
 wrapper around the bar and menu commands (plus `omarchy bar put
-devi.nyxiri-menu` in its Next steps); it removes any existing install
+pizza.dirty.nyxiri-menu` in its Next steps); it removes any existing install
 first, since `plugin add` refuses an already-installed id. It does not
 install the workspaces widget; that is a separate `plugin add` above.
 Pass `--no-menu` to it for the bar only.
@@ -117,7 +117,7 @@ To go back:
 
 ```sh
 omarchy bar reset
-omarchy plugin disable devi.nyxiri
+omarchy plugin disable pizza.dirty.nyxiri
 ```
 
 ## Configuration
@@ -129,7 +129,7 @@ are picked up on the next shell reload.
 ```jsonc
 {
   "bar": {
-    "id": "devi.nyxiri",
+    "id": "pizza.dirty.nyxiri",
     "nyxiri": {
       "version": 1,
       "sections": {
@@ -200,9 +200,9 @@ be a hex colour. A hex in `pill.color` works directly too.
 Right-click any bar surface, or run one of:
 
 ```sh
-omarchy-shell devi.nyxiri openSettings
-omarchy-shell devi.nyxiri toggleSettings
-omarchy-shell devi.nyxiri closeSettings
+omarchy-shell pizza.dirty.nyxiri openSettings
+omarchy-shell pizza.dirty.nyxiri toggleSettings
+omarchy-shell pizza.dirty.nyxiri closeSettings
 ```
 
 The card is a `PopupCard` centered under the bar. Its tabs are:

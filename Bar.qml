@@ -53,13 +53,13 @@ Item {
     return Nyxiri.filterKeys(nyxiri, screenName, keys)
   }
   // The menu fork's trigger settings live in its own bar layout entry. The
-  // card can edit them only when devi.nyxiri-menu is actually on the bar. Entries are
+  // card can edit them only when pizza.dirty.nyxiri-menu is actually on the bar. Entries are
   // keyed `id#serial`; the value is either a settings object or a bare id, so
   // the key (not the value) decides which entry this is.
   function nyxiriMenuEntryKey() {
     var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
     for (var key in entries) {
-      if (Nyxiri.baseWidgetId(key) === "devi.nyxiri-menu") return String(key)
+      if (Nyxiri.baseWidgetId(key) === "pizza.dirty.nyxiri-menu") return String(key)
     }
     return ""
   }
@@ -74,11 +74,11 @@ Item {
   readonly property bool nyxiriMenuAvailable: nyxiriMenuEntryKey() !== ""
   // The workspaces widget's settings live in its own bar layout entry, like
   // the menu fork's. The card can edit them only when
-  // devi.nyxiri-workspaces is actually on the bar.
+  // pizza.dirty.nyxiri-workspaces is actually on the bar.
   function nyxiriWorkspacesEntryKey() {
     var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
     for (var key in entries) {
-      if (Nyxiri.baseWidgetId(key) === "devi.nyxiri-workspaces") return String(key)
+      if (Nyxiri.baseWidgetId(key) === "pizza.dirty.nyxiri-workspaces") return String(key)
     }
     return ""
   }
@@ -93,11 +93,11 @@ Item {
   readonly property bool nyxiriWorkspacesAvailable: nyxiriWorkspacesEntryKey() !== ""
   // The weather widget's settings live in its own bar layout entry, like
   // the menu and workspaces forks'. The card can edit them only when
-  // devi.weather is actually on the bar.
+  // pizza.dirty.weather is actually on the bar.
   function nyxiriWeatherEntryKey() {
     var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
     for (var key in entries) {
-      if (Nyxiri.baseWidgetId(key) === "devi.weather") return String(key)
+      if (Nyxiri.baseWidgetId(key) === "pizza.dirty.weather") return String(key)
     }
     return ""
   }
@@ -896,7 +896,7 @@ Item {
     })
   }
 
-  // Replace devi.nyxiri-menu's inline settings with the current entry plus `patch`.
+  // Replace pizza.dirty.nyxiri-menu's inline settings with the current entry plus `patch`.
   // updateEntryInline replaces rather than merges, so the existing values are
   // copied first. A bare-id entry has no settings to keep.
   function writeMenuSettings(patch) {
@@ -909,10 +909,10 @@ Item {
       for (var name in entry) if (name !== "id") next[name] = entry[name]
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
-    return shell.updateEntryInline("devi.nyxiri-menu", next)
+    return shell.updateEntryInline("pizza.dirty.nyxiri-menu", next)
   }
 
-  // Replace devi.nyxiri-workspaces' inline settings with the current entry
+  // Replace pizza.dirty.nyxiri-workspaces' inline settings with the current entry
   // plus `patch`. Same replace-not-merge contract as writeMenuSettings.
   function writeWorkspacesSettings(patch) {
     if (!shell || typeof shell.updateEntryInline !== "function") return false
@@ -924,10 +924,10 @@ Item {
       for (var name in entry) if (name !== "id") next[name] = entry[name]
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
-    return shell.updateEntryInline("devi.nyxiri-workspaces", next)
+    return shell.updateEntryInline("pizza.dirty.nyxiri-workspaces", next)
   }
 
-  // Replace devi.weather's inline settings with the current entry plus
+  // Replace pizza.dirty.weather's inline settings with the current entry plus
   // `patch`. Same replace-not-merge contract as writeMenuSettings.
   function writeWeatherSettings(patch) {
     if (!shell || typeof shell.updateEntryInline !== "function") return false
@@ -939,7 +939,7 @@ Item {
       for (var name in entry) if (name !== "id") next[name] = entry[name]
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
-    return shell.updateEntryInline("devi.weather", next)
+    return shell.updateEntryInline("pizza.dirty.weather", next)
   }
   // NYXIRI-END nyxiri-write
 
@@ -1860,10 +1860,10 @@ Item {
 
   // NYXIRI-BEGIN nyxiri-ipc
   // Reachable from the menu fork and from a terminal:
-  //   omarchy-shell devi.nyxiri openSettings
-  //   omarchy-shell devi.nyxiri toggleSettings
+  //   omarchy-shell pizza.dirty.nyxiri openSettings
+  //   omarchy-shell pizza.dirty.nyxiri toggleSettings
   ShellIpc {
-    target: "devi.nyxiri"
+    target: "pizza.dirty.nyxiri"
 
     function openSettings(): void {
       root.openNyxiriSettings(root.focusedScreenName())

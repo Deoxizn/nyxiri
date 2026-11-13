@@ -16,11 +16,11 @@
 set -euo pipefail
 
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-target=${NYXIRI_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/devi.nyxiri}
+target=${NYXIRI_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/pizza.dirty.nyxiri}
 mode=add
 bar_repo=${NYXIRI_REPO:-https://github.com/Deoxizn/nyxiri.git}
 menu_repo=${NYXIRI_MENU_REPO:-https://github.com/Deoxizn/nyxiri-menu.git}
-menu_target=${NYXIRI_MENU_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/devi.nyxiri-menu}
+menu_target=${NYXIRI_MENU_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/pizza.dirty.nyxiri-menu}
 install_menu=1
 yes_flags=()
 
@@ -35,8 +35,8 @@ Usage: scripts/install.sh [--add|--clone|--link|--copy] [--no-menu] [--yes] [--t
   --copy   copy the plugin files instead (no .git, so no plugin updates)
   --no-menu  install the bar only, skip the Nyxiri menu
   --yes    pass --yes through to omarchy plugin add/remove (non-interactive)
-  --target DIR    install the bar elsewhere (default ~/.config/omarchy/plugins/devi.nyxiri)
-  --menu-target DIR  install the menu elsewhere (default ~/.config/omarchy/plugins/devi.nyxiri-menu)
+  --target DIR    install the bar elsewhere (default ~/.config/omarchy/plugins/pizza.dirty.nyxiri)
+  --menu-target DIR  install the menu elsewhere (default ~/.config/omarchy/plugins/pizza.dirty.nyxiri-menu)
 USAGE
 }
 
@@ -85,10 +85,10 @@ if [[ $mode == add ]]; then
     printf 'install: omarchy is not on PATH; use --clone, --link, or --copy instead\n' >&2
     exit 1
   }
-  remove_if_installed devi.nyxiri "$target"
+  remove_if_installed pizza.dirty.nyxiri "$target"
   add_plugin "$bar_repo"
   if (( install_menu )); then
-    remove_if_installed devi.nyxiri-menu "$menu_target"
+    remove_if_installed pizza.dirty.nyxiri-menu "$menu_target"
     add_plugin "$menu_repo"
   fi
 elif [[ $mode == clone ]]; then
@@ -112,7 +112,7 @@ elif [[ $mode == link ]]; then
   # No menu checkout lives in this repo, so the menu still goes through
   # plugin add even in link mode.
   if (( install_menu )); then
-    remove_if_installed devi.nyxiri-menu "$menu_target"
+    remove_if_installed pizza.dirty.nyxiri-menu "$menu_target"
     add_plugin "$menu_repo"
   fi
 else
@@ -121,15 +121,15 @@ else
   cp -- manifest.json Bar.qml BarModel.js Nyxiri.js NyxiriSettings.qml README.md LICENSE "$target/"
   printf 'copied to %s\n' "$target"
   if (( install_menu )); then
-    remove_if_installed devi.nyxiri-menu "$menu_target"
+    remove_if_installed pizza.dirty.nyxiri-menu "$menu_target"
     add_plugin "$menu_repo"
   fi
 fi
 
 printf '\nNext:\n'
 printf '  omarchy-shell shell rescanPlugins\n'
-printf '  omarchy bar use devi.nyxiri\n'
+printf '  omarchy bar use pizza.dirty.nyxiri\n'
 if (( install_menu )); then
-  printf '  omarchy bar put devi.nyxiri-menu\n'
+  printf '  omarchy bar put pizza.dirty.nyxiri-menu\n'
 fi
 printf 'or pick Nyxiri under Settings > Plugins in the Omarchy menu.\n'

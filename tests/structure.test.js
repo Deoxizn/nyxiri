@@ -41,7 +41,7 @@ test("the working bar imports the config module and keeps its entry point", () =
   assert.match(bar, /import "Nyxiri\.js" as Nyxiri/)
   assert.match(bar, /function writeNyxiri\(patch\)/)
   const manifest = JSON.parse(read("manifest.json"))
-  assert.equal(manifest.id, "devi.nyxiri")
+  assert.equal(manifest.id, "pizza.dirty.nyxiri")
   assert.deepEqual(manifest.kinds, ["bar"])
   assert.equal(manifest.entryPoints.bar, "Bar.qml")
 })
@@ -179,7 +179,7 @@ test("the bar exposes the workspaces widget's settings like the menu's", () => {
   assert.match(bar, /function nyxiriWorkspacesSetting\(name, fallback\)/)
   assert.match(bar, /nyxiriWorkspacesAvailable: nyxiriWorkspacesEntryKey\(\) !== ""/)
   assert.match(bar, /function writeWorkspacesSettings\(patch\)/)
-  assert.match(bar, /updateEntryInline\("devi\.nyxiri-workspaces", next\)/)
+  assert.match(bar, /updateEntryInline\("pizza\.dirty\.nyxiri-workspaces", next\)/)
 })
 
 test("the bar api no longer carries the removed center reveal properties", () => {
@@ -245,7 +245,7 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
   const settings = read("NyxiriSettings.qml")
   // The mode is Hyprland state, not a widget setting: the card asks the
   // workspaces plugin's bin/mode, through bash (pushes land mode 644).
-  assert.match(settings, /devi\.nyxiri-workspaces\/bin\/mode/)
+  assert.match(settings, /pizza\.dirty\.nyxiri-workspaces\/bin\/mode/)
   assert.match(settings, /\["bash", popup\.classicModeScript, "status"\]/)
   assert.match(settings, /\["bash", popup\.classicModeScript, classic \? "classic" : "4\.5"\]/)
   assert.match(settings, /label: "Classic workspaces"/)
@@ -275,14 +275,14 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
 test("the settings card has a weather secondary-location field", () => {
   const settings = read("NyxiriSettings.qml")
   const bar = read("Bar.qml")
-  // The card reads/writes devi.weather's layout entry the same way it
+  // The card reads/writes pizza.dirty.weather's layout entry the same way it
   // does the menu and workspaces entries, only when the widget is on
   // the bar.
-  assert.match(bar, /Nyxiri\.baseWidgetId\(key\) === "devi\.weather"/)
+  assert.match(bar, /Nyxiri\.baseWidgetId\(key\) === "pizza\.dirty\.weather"/)
   assert.match(bar, /function nyxiriWeatherSetting\(name, fallback\)/)
   assert.match(bar, /nyxiriWeatherAvailable: nyxiriWeatherEntryKey\(\) !== ""/)
   assert.match(bar, /function writeWeatherSettings\(patch\)/)
-  assert.match(bar, /shell\.updateEntryInline\("devi\.weather", next\)/)
+  assert.match(bar, /shell\.updateEntryInline\("pizza\.dirty\.weather", next\)/)
   assert.match(settings, /function weatherSetting\(name, fallback\)/)
   assert.match(settings, /function setWeather\(patch\)/)
   // The field lives in the Appearance tab's WEATHER section, commits the
@@ -317,25 +317,25 @@ test("upstream snapshots are present", () => {
 test("the all-in-one installer covers the suite, cats optional, wallcraft out", () => {
   const install = read("scripts/install-all.sh")
   // Core: the bar and the widgets that belong to it.
-  for (const id of ["devi.nyxiri", "devi.nyxiri-menu", "devi.nyxiri-workspaces", "deoxizn.clock", "devi.weather", "devi.arch-updates"]) {
+  for (const id of ["pizza.dirty.nyxiri", "pizza.dirty.nyxiri-menu", "pizza.dirty.nyxiri-workspaces", "pizza.dirty.clock", "pizza.dirty.weather", "pizza.dirty.arch-updates"]) {
     assert.match(install, new RegExp("add_plugin " + id.replace(".", "\\.") + " https://github.com/Deoxizn/"))
   }
   // Cats are opt-in behind --with-cats, never installed by default.
   assert.match(install, /--with-cats\) with_cats=1/)
   assert.match(install, /if \(\( with_cats \)\)/)
-  assert.match(install, /add_plugin deoxizn\.cpurr/)
-  assert.match(install, /add_plugin deoxizn\.bongocat/)
+  assert.match(install, /add_plugin pizza\.dirty\.cpurr/)
+  assert.match(install, /add_plugin pizza\.dirty\.bongocat/)
   // Wallcraft is independent (its settings work without the bar), so it
   // is not installed here, only mentioned as a separate install.
-  assert.doesNotMatch(install, /add_plugin devi\.wallcraft/)
+  assert.doesNotMatch(install, /add_plugin pizza\.dirty\.wallcraft/)
   assert.match(install, /Wallcraft is a separate install/)
   // Non-interactive: --yes skips the gum prompts, so the script is safe
   // to run off GitHub with bash <(curl ...). Already-installed plugins
   // are skipped, never removed. Menu goes on the bar before workspaces.
   assert.match(install, /omarchy plugin add "\$url" --enable --yes/)
   assert.match(install, /already installed, skipping/)
-  assert.match(install, /omarchy bar use devi\.nyxiri/)
-  assert.ok(install.indexOf('put devi.nyxiri-menu left') < install.indexOf('put devi.nyxiri-workspaces left'))
+  assert.match(install, /omarchy bar use pizza\.dirty\.nyxiri/)
+  assert.ok(install.indexOf('put pizza.dirty.nyxiri-menu left') < install.indexOf('put pizza.dirty.nyxiri-workspaces left'))
   assert.match(install, /omarchy restart shell/)
 })
 
@@ -348,14 +348,14 @@ test("the README lists the installer and every plugin in the suite", () => {
   // described in its own section: the details live in that plugin's
   // own README.
   for (const [id, repo] of [
-    ["devi.nyxiri", "Deoxizn/nyxiri"],
-    ["devi.nyxiri-menu", "Deoxizn/nyxiri-menu"],
-    ["devi.nyxiri-workspaces", "Deoxizn/nyxiri-workspaces"],
-    ["deoxizn.clock", "Deoxizn/omarchy-clock"],
-    ["devi.weather", "Deoxizn/omarchy-weather"],
-    ["devi.arch-updates", "Deoxizn/Arch-Updates"],
-    ["deoxizn.cpurr", "Deoxizn/omarchy-cpurr"],
-    ["deoxizn.bongocat", "Deoxizn/omarchy-bongocat"],
+    ["pizza.dirty.nyxiri", "Deoxizn/nyxiri"],
+    ["pizza.dirty.nyxiri-menu", "Deoxizn/nyxiri-menu"],
+    ["pizza.dirty.nyxiri-workspaces", "Deoxizn/nyxiri-workspaces"],
+    ["pizza.dirty.clock", "Deoxizn/omarchy-clock"],
+    ["pizza.dirty.weather", "Deoxizn/omarchy-weather"],
+    ["pizza.dirty.arch-updates", "Deoxizn/Arch-Updates"],
+    ["pizza.dirty.cpurr", "Deoxizn/omarchy-cpurr"],
+    ["pizza.dirty.bongocat", "Deoxizn/omarchy-bongocat"],
   ]) {
     assert.match(readme, new RegExp("\\[\\*\\*" + id.replace(".", "\\.") + "\\*\\*\\]\\(https://github.com/" + repo + "\\)"))
   }
@@ -363,6 +363,45 @@ test("the README lists the installer and every plugin in the suite", () => {
     assert.doesNotMatch(readme, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
   }
   // Wallcraft is called out as a separate, independent install.
-  assert.match(readme, /devi\.wallcraft/)
+  assert.match(readme, /pizza\.dirty\.wallcraft/)
   assert.match(readme, /not included/)
+})
+
+test("the installer migrates old devi./deoxizn. ids to pizza.dirty. without a reinstall", () => {
+  const install = read("scripts/install-all.sh")
+  // A migrate step runs before any install, renaming the plugin dirs in
+  // place for every old id, both prefixes.
+  assert.match(install, /migrate_ids/)
+  for (const pair of [
+    ["devi.nyxiri", "pizza.dirty.nyxiri"],
+    ["devi.nyxiri-menu", "pizza.dirty.nyxiri-menu"],
+    ["devi.nyxiri-workspaces", "pizza.dirty.nyxiri-workspaces"],
+    ["deoxizn.clock", "pizza.dirty.clock"],
+    ["devi.weather", "pizza.dirty.weather"],
+    ["devi.arch-updates", "pizza.dirty.arch-updates"],
+    ["deoxizn.cpurr", "pizza.dirty.cpurr"],
+    ["deoxizn.bongocat", "pizza.dirty.bongocat"],
+    ["devi.wallcraft", "pizza.dirty.wallcraft"],
+  ]) {
+    assert.match(install, new RegExp("migrate_one " + pair[0].replace(/\./g, "\\.") + " " + pair[1].replace(/\./g, "\\.")))
+  }
+  // The clock's config and cache dirs move to the new id.
+  assert.match(install, /\.config\/deoxizn\.clock/)
+  assert.match(install, /\.config\/pizza\.dirty\.clock/)
+  assert.match(install, /\.cache\/deoxizn\.clock/)
+  assert.match(install, /\.cache\/pizza\.dirty\.clock/)
+  // shell.json layout entries are re-keyed (string or object id), bar.id
+  // is updated, and the bar's own bar.nyxiri key is untouched: it is not
+  // id-derived, the host hands the whole bar object and the bar reads
+  // the nyxiri key in it.
+  assert.match(install, /shell\.json/)
+  assert.match(install, /bar\.get\("id"\) in mapping/)
+  assert.doesNotMatch(install, /bar\.nyxiri.*pizza\.dirty\.nyxiri/)
+  // A rename never clobbers an existing new-id dir.
+  assert.match(install, /both old and new ids installed, leaving/)
+})
+
+test("the manifest id is pizza.dirty.nyxiri", () => {
+  const manifest = JSON.parse(read("manifest.json"))
+  assert.equal(manifest.id, "pizza.dirty.nyxiri")
 })

@@ -141,7 +141,7 @@ KeyboardPanel {
   // The mode is Hyprland state, not a widget setting, so the card asks the
   // script instead of reading the layout entry. The script runs through
   // bash: pushes land mode 644, so it never runs directly.
-  readonly property string classicModeScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/devi.nyxiri-workspaces/bin/mode"
+  readonly property string classicModeScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/pizza.dirty.nyxiri-workspaces/bin/mode"
   property bool classicMode: false
   property bool classicModeKnown: false
   property bool classicSwitching: false
@@ -960,7 +960,7 @@ KeyboardPanel {
             }
 
             // The weather fork's secondary location is a widget setting;
-            // only offer it when devi.weather is actually on the bar.
+            // only offer it when pizza.dirty.weather is actually on the bar.
             // A name ("Tucson") or "lat,lon". Empty means no secondary.
             SectionLabel {
               visible: popup.bar.nyxiriWeatherAvailable

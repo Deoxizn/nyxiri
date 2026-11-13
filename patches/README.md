@@ -29,7 +29,7 @@ Block names in use:
 - `nyxiri-palette` — `colors.toml` watcher
 - `nyxiri-write` — `writeNyxiri()`
 - `nyxiri-settings-state` — open/close state and IPC entry points
-- `nyxiri-ipc` — `devi.nyxiri` IPC handler
+- `nyxiri-ipc` — `pizza.dirty.nyxiri` IPC handler
 - `nyxiri-right-click` — bar background right-click
 - `nyxiri-pill` — pill surface component
 - `nyxiri-islands-horizontal` / `nyxiri-islands-vertical` — section islands
