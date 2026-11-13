@@ -74,6 +74,32 @@ migrate_ids() {
   migrate_one deoxizn.bongocat pizza.dirty.bongocat
   migrate_one devi.wallcraft pizza.dirty.wallcraft
 
+  # The catalog reads manifest.id, not the directory name, so a renamed
+  # dir alone still shows up under the old id. Update the id inside each
+  # installed manifest too, so the catalog (and the shell) sees the new
+  # id. This also covers a re-run after the dirs were already renamed.
+  fix_manifest_id() {
+    local old="$1" new="$2" manifest
+    # Assign manifest on its own line: bash expands every word in a
+    # `local` statement before assigning any of them, so $new in the
+    # same line would read the outer (stale) value.
+    manifest="$PLUGINS_DIR/$new/manifest.json"
+    [[ -f $manifest ]] || return 0
+    if [[ $(jq -r '.id // ""' "$manifest") == "$old" ]]; then
+      jq --arg id "$new" '.id = $id' "$manifest" > "$manifest.tmp" && mv -- "$manifest.tmp" "$manifest"
+      printf '%s: manifest id updated to %s\n' "$old" "$new"
+    fi
+  }
+  fix_manifest_id devi.nyxiri pizza.dirty.nyxiri
+  fix_manifest_id devi.nyxiri-menu pizza.dirty.nyxiri-menu
+  fix_manifest_id devi.nyxiri-workspaces pizza.dirty.nyxiri-workspaces
+  fix_manifest_id deoxizn.clock pizza.dirty.clock
+  fix_manifest_id devi.weather pizza.dirty.weather
+  fix_manifest_id devi.arch-updates pizza.dirty.arch-updates
+  fix_manifest_id deoxizn.cpurr pizza.dirty.cpurr
+  fix_manifest_id deoxizn.bongocat pizza.dirty.bongocat
+  fix_manifest_id devi.wallcraft pizza.dirty.wallcraft
+
   # The clock keeps its calendars under ~/.config/deoxizn.clock/ and its
   # cache under ~/.cache/deoxizn.clock/; move both to the new id.
   if [[ -e $HOME/.config/deoxizn.clock && ! -e $HOME/.config/pizza.dirty.clock ]]; then
@@ -162,6 +188,11 @@ if (( with_cats )); then
 fi
 
 omarchy-shell shell rescanPlugins >/dev/null || true
+
+# Restart the shell now, before the bar use and the puts: the shell only
+# learns the new ids by rescanning, and a restart guarantees it. The
+# puts retry while the shell comes back up.
+omarchy restart shell
 omarchy bar use pizza.dirty.nyxiri
 
 # Place the widgets. Menu first, then workspaces, so the trigger glyph
@@ -182,8 +213,6 @@ if (( with_cats )); then
   put pizza.dirty.cpurr center
   put pizza.dirty.bongocat center
 fi
-
-omarchy restart shell
 
 printf '\nNyxiri installed.\n'
 printf 'Wallcraft is a separate install (it works without the bar):\n'

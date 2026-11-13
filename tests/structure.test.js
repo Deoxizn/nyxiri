@@ -405,3 +405,21 @@ test("the manifest id is pizza.dirty.nyxiri", () => {
   const manifest = JSON.parse(read("manifest.json"))
   assert.equal(manifest.id, "pizza.dirty.nyxiri")
 })
+
+test("the installer fixes stale installed manifest ids and restarts before the bar use", () => {
+  const install = read("scripts/install-all.sh")
+  // The catalog reads manifest.id, not the directory name, so a renamed
+  // dir alone still shows up under the old id. The installer updates the
+  // id inside each installed manifest too.
+  assert.match(install, /fix_manifest_id/)
+  assert.match(install, /jq --arg id "\$new" '\.id = \$id'/)
+  // The manifest path is assigned on its own line, not inside the same
+  // `local` statement: bash expands every word in a `local` before
+  // assigning any of them, so $new there would read the outer value.
+  assert.match(install, /manifest="\$PLUGINS_DIR\/\$new\/manifest\.json"/)
+  assert.doesNotMatch(install, /local old="\$1" new="\$2" manifest=/)
+  // The shell only learns the new ids by rescanning, so the restart
+  // happens before the bar use and the puts, not after.
+  assert.ok(install.indexOf("omarchy restart shell") < install.indexOf("omarchy bar use pizza.dirty.nyxiri"))
+  assert.doesNotMatch(install, /put pizza\.dirty\.bongocat center\n\nomarchy restart shell/)
+})
