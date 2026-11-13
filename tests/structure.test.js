@@ -344,9 +344,9 @@ test("the README lists the installer and every plugin in the suite", () => {
   // The all-in-one installer is the install method.
   assert.match(readme, /scripts\/install-all\.sh/)
   assert.match(readme, /--with-cats/)
-  // Every plugin the suite now includes, linked to its repo, not
-  // described in its own section: the details live in that plugin's
-  // own README.
+  // Every plugin the suite now includes, linked to its repo by its short
+  // app id, not described in its own section: the details live in that
+  // plugin's own README.
   for (const [id, repo] of [
     ["pizza.dirty.nyxiri", "Deoxizn/nyxiri"],
     ["pizza.dirty.nyxiri-menu", "Deoxizn/nyxiri-menu"],
@@ -357,7 +357,9 @@ test("the README lists the installer and every plugin in the suite", () => {
     ["pizza.dirty.cpurr", "Deoxizn/omarchy-cpurr"],
     ["pizza.dirty.bongocat", "Deoxizn/omarchy-bongocat"],
   ]) {
-    assert.match(readme, new RegExp("\\[\\*\\*" + id.replace(".", "\\.") + "\\*\\*\\]\\(https://github.com/" + repo + "\\)"))
+    const short = id.substring(id.lastIndexOf(".") + 1)
+    assert.match(readme, new RegExp("\\[\\*\\*" + short.replace(".", "\\.") + "\\*\\*\\]\\(https://github.com/" + repo + "\\)"))
+    assert.doesNotMatch(readme, new RegExp("\\[\\*\\*" + id.replace(".", "\\.") + "\\*\\*\\]\\(https://github.com/" + repo + "\\)"))
   }
   for (const heading of ["## Clock widget", "## Weather widget", "## Arch updates widget", "## Cat widgets"]) {
     assert.doesNotMatch(readme, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
@@ -422,4 +424,16 @@ test("the installer fixes stale installed manifest ids and restarts before the b
   // happens before the bar use and the puts, not after.
   assert.ok(install.indexOf("omarchy restart shell") < install.indexOf("omarchy bar use pizza.dirty.nyxiri"))
   assert.doesNotMatch(install, /put pizza\.dirty\.bongocat center\n\nomarchy restart shell/)
+})
+
+test("the monitors tab shows the short app id, not the full plugin id", () => {
+  const nyxiri = read("Nyxiri.js")
+  // Display-only helper: full id stays what rules store and match.
+  assert.match(nyxiri, /function shortWidgetId\(key\)/)
+  assert.match(nyxiri, /shortWidgetId: shortWidgetId/)
+  const settings = read("NyxiriSettings.qml")
+  assert.match(settings, /text: Nyxiri\.shortWidgetId\(modelData\)/)
+  // Selection and toggling still use the full layout key.
+  assert.match(settings, /selected: popup\.ruleContains\(monitorCard\.monitorName, modelData\)/)
+  assert.match(settings, /onClicked: popup\.toggleRule\(monitorCard\.monitorName, modelData\)/)
 })

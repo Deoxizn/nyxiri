@@ -189,6 +189,15 @@ function baseWidgetId(key) {
   return hash === -1 ? text : text.substring(0, hash)
 }
 
+// Display label for a widget id: the short app id after the last dot
+// (pizza.dirty.nyxiri-workspaces -> nyxiri-workspaces). The full id is
+// still what rules store and match against; this is display only.
+function shortWidgetId(key) {
+  var text = baseWidgetId(key)
+  var dot = text.lastIndexOf(".")
+  return dot === -1 ? text : text.substring(dot + 1)
+}
+
 function ruleMatches(rule, key) {
   var wanted = String(rule === undefined || rule === null ? "" : rule).trim()
   if (!wanted) return false
@@ -288,6 +297,7 @@ if (typeof module !== "undefined" && module.exports) {
     allows: allows,
     filterKeys: filterKeys,
     baseWidgetId: baseWidgetId,
+    shortWidgetId: shortWidgetId,
     ruleMatches: ruleMatches,
     parseColorsToml: parseColorsToml,
     paletteRoles: paletteRoles,

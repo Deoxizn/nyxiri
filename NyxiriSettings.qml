@@ -1297,7 +1297,7 @@ KeyboardPanel {
 
                     delegate: Button {
                       required property string modelData
-                      text: Nyxiri.baseWidgetId(modelData)
+                      text: Nyxiri.shortWidgetId(modelData)
                       selected: popup.ruleContains(monitorCard.monitorName, modelData)
                       bordered: !selected
                       foreground: popup.bar.foreground
