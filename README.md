@@ -59,15 +59,15 @@ bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main
 
 That installs, in order:
 
-- [**pizza.dirty.nyxiri**](https://github.com/Deoxizn/nyxiri) — the bar (this repo).
-- [**pizza.dirty.nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu entry, under Appearance.
-- [**pizza.dirty.nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) — the workspaces widget (see below).
-- [**pizza.dirty.clock**](https://github.com/Deoxizn/omarchy-clock) — the clock widget, with a calendar panel.
-- [**pizza.dirty.weather**](https://github.com/Deoxizn/omarchy-weather) — the weather widget, 10-day forecast plus a second city.
-- [**pizza.dirty.arch-updates**](https://github.com/Deoxizn/Arch-Updates) — repo, AUR, mise and git plugin/theme update counts.
+- [**nyxiri**](https://github.com/Deoxizn/nyxiri) — the bar (this repo).
+- [**nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu entry, under Appearance.
+- [**nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) — the workspaces widget (see below).
+- [**clock**](https://github.com/Deoxizn/omarchy-clock) — the clock widget, with a calendar panel.
+- [**weather**](https://github.com/Deoxizn/omarchy-weather) — the weather widget, 10-day forecast plus a second city.
+- [**arch-updates**](https://github.com/Deoxizn/Arch-Updates) — repo, AUR, mise and git plugin/theme update counts.
 
-Add `--with-cats` to also install the cat widgets, [**pizza.dirty.cpurr**](https://github.com/Deoxizn/omarchy-cpurr)
-and [**pizza.dirty.bongocat**](https://github.com/Deoxizn/omarchy-bongocat). They are fun, not core, so they are opt-in.
+Add `--with-cats` to also install the cat widgets, [**cpurr**](https://github.com/Deoxizn/omarchy-cpurr)
+and [**bongocat**](https://github.com/Deoxizn/omarchy-bongocat). They are fun, not core, so they are opt-in.
 
 Everything goes through `omarchy plugin add --enable --yes`, so no
 prompts. Already-installed plugins are skipped, never removed or
