@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 # Nyxiri all-in-one installer: the bar and its bar widgets in one command.
 # Core plugins are always installed; the cat widgets (cpurr and Bongo Cat)
-# are opt-in with --with-cats. Wallcraft is deliberately NOT included: it
-# is a background service whose settings work without the bar, so it stays
-# an independent install.
+# are opt-in with --with-cats.
 #
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh) --with-cats
@@ -72,7 +70,6 @@ migrate_ids() {
   migrate_one devi.arch-updates pizza.dirty.arch-updates
   migrate_one deoxizn.cpurr pizza.dirty.cpurr
   migrate_one deoxizn.bongocat pizza.dirty.bongocat
-  migrate_one devi.wallcraft pizza.dirty.wallcraft
 
   # The catalog reads manifest.id, not the directory name, so a renamed
   # dir alone still shows up under the old id. Update the id inside each
@@ -98,7 +95,6 @@ migrate_ids() {
   fix_manifest_id devi.arch-updates pizza.dirty.arch-updates
   fix_manifest_id deoxizn.cpurr pizza.dirty.cpurr
   fix_manifest_id deoxizn.bongocat pizza.dirty.bongocat
-  fix_manifest_id devi.wallcraft pizza.dirty.wallcraft
 
   # The clock keeps its calendars under ~/.config/deoxizn.clock/ and its
   # cache under ~/.cache/deoxizn.clock/; move both to the new id.
@@ -128,7 +124,6 @@ mapping = {
     "devi.arch-updates": "pizza.dirty.arch-updates",
     "deoxizn.cpurr": "pizza.dirty.cpurr",
     "deoxizn.bongocat": "pizza.dirty.bongocat",
-    "devi.wallcraft": "pizza.dirty.wallcraft",
 }
 try:
     with open(path) as f:
@@ -214,6 +209,14 @@ if (( with_cats )); then
   put pizza.dirty.bongocat center
 fi
 
+# Classic workspaces need their Hyprland loader wired up, or the Classic
+# toggle in the settings card has nothing to switch to. The setup script
+# is idempotent and a no-op when the loader is already in place, so it is
+# safe on a re-run. It installs the two workspaces files and the loader
+# block, then reloads Hyprland.
+classic_setup="$PLUGINS_DIR/pizza.dirty.nyxiri-workspaces/scripts/setup-classic.sh"
+if [[ -f $classic_setup ]]; then
+  bash "$classic_setup" || printf 'install-all: classic workspaces setup failed; run it by hand: bash %s\n' "$classic_setup"
+fi
+
 printf '\nNyxiri installed.\n'
-printf 'Wallcraft is a separate install (it works without the bar):\n'
-printf '  omarchy plugin add https://github.com/Deoxizn/wallcraft.git --enable\n'
