@@ -209,6 +209,13 @@ if (( with_cats )); then
   put pizza.dirty.bongocat center
 fi
 
+# The stock workspaces widget stays in the layout unless it is disabled,
+# so a fresh install shows two workspaces bars: the stock one and this
+# one. Disable it (do not remove it) so it can be re-enabled later from
+# the settings card or with `omarchy plugin enable omarchy.workspaces`.
+omarchy plugin disable omarchy.workspaces ||
+  printf 'install-all: could not disable the stock workspaces widget; disable it in the settings card (Plugins tab)\n'
+
 # Classic workspaces need their Hyprland loader wired up, or the Classic
 # toggle in the settings card has nothing to switch to. The setup script
 # is idempotent and a no-op when the loader is already in place, so it is
