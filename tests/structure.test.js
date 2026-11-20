@@ -29,7 +29,7 @@ test("every NYXIRI-BEGIN block has a matching end", () => {
   assert.ok(seen.has("nyxiri-config"), "missing config block")
   assert.ok(seen.has("nyxiri-write"), "missing write block")
   assert.ok(seen.has("nyxiri-pill"), "missing pill block")
-  assert.ok(seen.has("nyxiri-settings-card"), "missing settings block")
+  assert.ok(seen.has("nyxiri-settings-window"), "missing settings window block")
 })
 
 test("BarModel.js is unmodified upstream", () => {
@@ -46,14 +46,14 @@ test("the working bar imports the config module and keeps its entry point", () =
   assert.equal(manifest.entryPoints.bar, "Bar.qml")
 })
 
-test("the settings card is a KeyboardPanel and does not redeclare bar", () => {
-  const settings = read("NyxiriSettings.qml")
-  assert.match(settings, /^KeyboardPanel \{/m)
-  assert.doesNotMatch(settings, /required property var bar/)
+test("the settings window is a PanelWindow and declares its own bar", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  assert.match(settings, /^PanelWindow \{/m)
+  assert.match(settings, /property var bar: null/)
 })
 
 test("the settings card has a bar-surface opacity slider and a registry fallback for the plugin probe", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /surfaceOpacity/)
   assert.match(settings, /pluginsFromRegistry/)
   assert.match(settings, /probeWatchdog/)
@@ -66,7 +66,7 @@ test("the bar background honors the surface opacity setting", () => {
 })
 
 test("the pill opacity slider is the fill level itself, so 100% means solid", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /BodyText \{ text: "Pill opacity"/)
   assert.doesNotMatch(settings, /pill\.opacity/)
   const bar = read("Bar.qml")
@@ -76,26 +76,26 @@ test("the pill opacity slider is the fill level itself, so 100% means solid", ()
 })
 
 test("the settings card forces keyboard focus into its text fields on click", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /component FocusField: TextField/)
   assert.match(settings, /forceActiveFocus/)
   assert.doesNotMatch(settings, /            TextField \{/)
 })
 
-test("the settings card is a KeyboardPanel so its text fields take input", () => {
-  const settings = read("NyxiriSettings.qml")
-  assert.match(settings, /^KeyboardPanel \{/m)
+test("the settings window is a PanelWindow so its text fields take input", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  assert.match(settings, /^PanelWindow \{/m)
   assert.doesNotMatch(settings, /^PopupCard \{/m)
   // A PopupCard is an xdg-popup: it only receives keys after a click
   // routes focus through its parent surface, so the wordmark and image
   // fields showed a blinking cursor and swallowed every key, and no
-  // amount of forceActiveFocus fixed it. KeyboardPanel is the stock
-  // layer-shell fix (Exclusive prime, then OnDemand), the same way the
-  // weather panel's location search works.
+  // amount of forceActiveFocus fixed it. PanelWindow is a real
+  // layer-shell surface with OnDemand keyboard focus, so the fields
+  // take input natively.
 })
 
 test("text fields commit as you type instead of only on Enter", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // The field owns its text and only syncs from the saved value when that
   // value changes, so an unrelated layout write can't snap in-progress
   // typing back to the last saved value (the wordmark/image hit-or-miss).
@@ -118,7 +118,7 @@ test("text fields commit as you type instead of only on Enter", () => {
 })
 
 test("the menu wordmark has presets above the custom field", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // Presets are one-tap fills of the same field: the widget renders every
   // wordmark uppercased with wide letterspacing, so the presets are canned
   // strings, not image assets.
@@ -132,7 +132,7 @@ test("the menu wordmark has presets above the custom field", () => {
 })
 
 test("the menu trigger uses choice rows, not dropdowns", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // Dropdown popups are clipped by the card's window, so the Custom
   // option never showed, and their clicks clear the card's focus grab,
   // so picking an option closed the card. Choice rows have neither
@@ -148,7 +148,7 @@ test("the menu trigger uses choice rows, not dropdowns", () => {
 })
 
 test("the settings card shows a scrollbar when a tab overflows", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /id: scrollArea/)
   assert.match(settings, /width: parent\.width - Style\.space\(10\)/)
   assert.match(settings, /width: scrollArea\.width/)
@@ -159,14 +159,14 @@ test("the settings card shows a scrollbar when a tab overflows", () => {
 })
 
 test("the plugins tab shows a row for every plugin even when kinds are unknown", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /rowShown/)
   assert.match(settings, /kindList\(modelData\)\.length === 0/)
   assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
 })
 
 test("the plugins tab sorts active plugins first, then disabled, each alphabetical", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /readonly property var sortedPlugins/)
   assert.match(settings, /model: popup\.activePluginList/)
   assert.match(settings, /model: popup\.disabledPluginList/)
@@ -199,7 +199,7 @@ test("the bar api no longer carries the removed center reveal properties", () =>
 })
 
 test("the settings card probe cleanup uses the bare watchdog id", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // The watchdog timer is nested, so popup.probeWatchdog does not resolve;
   // the bare id is the one that works (as the other two uses already do).
   assert.doesNotMatch(settings, /popup\.probeWatchdog/)
@@ -207,7 +207,7 @@ test("the settings card probe cleanup uses the bare watchdog id", () => {
 })
 
 test("the settings card offers workspaces mode and hide-empty controls", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /text: "WORKSPACES"/)
   assert.match(settings, /workspacesSetting\("mode", "10"\)/)
   assert.match(settings, /value: "active", label: "Active only"/)
@@ -217,7 +217,7 @@ test("the settings card offers workspaces mode and hide-empty controls", () => {
 })
 
 test("the settings card has a workspaces tab with a marker style picker", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /\{ value: "workspaces", label: "Workspaces" \}/)
   assert.match(settings, /visible: popup\.tab === "workspaces"/)
   // Choice rows, not dropdowns: a dropdown popup is clipped by this card's
@@ -244,7 +244,7 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
 })
 
 test("the settings card has a classic workspaces toggle and a per-monitor ranges field", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // The mode is Hyprland state, not a widget setting: the card asks the
   // workspaces plugin's bin/mode, through bash (pushes land mode 644).
   assert.match(settings, /pizza\.dirty\.nyxiri-workspaces\/bin\/mode/)
@@ -275,7 +275,7 @@ test("the settings card has a classic workspaces toggle and a per-monitor ranges
 })
 
 test("the settings card has a weather secondary-location field", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   const bar = read("Bar.qml")
   // The card reads/writes pizza.dirty.weather's layout entry the same way it
   // does the menu and workspaces entries, only when the widget is on
@@ -298,7 +298,7 @@ test("the settings card has a weather secondary-location field", () => {
 })
 
 test("the settings card has a cycle-layout-on-click toggle", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // Clicking the focused workspace cycles tiling / scrolling / floating;
   // the toggle turns that off, so a double-click to focus a workspace
   // can't change the layout. Same string-"true" read as hideEmpty, on
@@ -328,9 +328,9 @@ test("the all-in-one installer covers the suite, cats optional, wallcraft out", 
   assert.match(install, /add_plugin pizza\.dirty\.cpurr/)
   assert.match(install, /add_plugin pizza\.dirty\.bongocat/)
   // Wallcraft is independent (its settings work without the bar), so it
-  // is not installed here, only mentioned as a separate install.
+  // is not installed here and is not mentioned at all.
   assert.doesNotMatch(install, /add_plugin pizza\.dirty\.wallcraft/)
-  assert.match(install, /Wallcraft is a separate install/)
+  assert.doesNotMatch(install, /wallcraft/i)
   // Non-interactive: --yes skips the gum prompts, so the script is safe
   // to run off GitHub with bash <(curl ...). Already-installed plugins
   // are skipped, never removed. Menu goes on the bar before workspaces.
@@ -385,7 +385,8 @@ test("the installer migrates old devi./deoxizn. ids to pizza.dirty. without a re
     ["devi.arch-updates", "pizza.dirty.arch-updates"],
     ["deoxizn.cpurr", "pizza.dirty.cpurr"],
     ["deoxizn.bongocat", "pizza.dirty.bongocat"],
-    ["devi.wallcraft", "pizza.dirty.wallcraft"],
+    // No wallcraft pair: wallcraft is independent and left out of the
+    // installer entirely, so there is nothing to migrate here.
   ]) {
     assert.match(install, new RegExp("migrate_one " + pair[0].replace(/\./g, "\\.") + " " + pair[1].replace(/\./g, "\\.")))
   }
@@ -433,7 +434,7 @@ test("the monitors tab shows the short app id, not the full plugin id", () => {
   // Display-only helper: full id stays what rules store and match.
   assert.match(nyxiri, /function shortWidgetId\(key\)/)
   assert.match(nyxiri, /shortWidgetId: shortWidgetId/)
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /text: Nyxiri\.shortWidgetId\(modelData\)/)
   // Selection and toggling still use the full layout key.
   assert.match(settings, /selected: popup\.ruleContains\(monitorCard\.monitorName, modelData\)/)
@@ -441,7 +442,7 @@ test("the monitors tab shows the short app id, not the full plugin id", () => {
 })
 
 test("the Widgets tab is now the Plugins tab, grouped under Active and Disabled", () => {
-  const settings = read("NyxiriSettings.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
   // Tab renamed.
   assert.match(settings, /\{ value: "plugins", label: "Plugins" \}/)
   assert.doesNotMatch(settings, /\{ value: "widgets", label: "Widgets" \}/)
@@ -461,4 +462,33 @@ test("the Widgets tab is now the Plugins tab, grouped under Active and Disabled"
   assert.match(settings, /delegate: PluginRow \{\}/)
   // The count line still sits above the groups.
   assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
+})
+
+test("the settings window has a sidebar, a bat header, and a masked body", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  // Sidebar sections, one per tab.
+  assert.match(settings, /id: sidebar/)
+  assert.match(settings, /\{ value: "appearance", label: "Appearance" \}/)
+  assert.match(settings, /\{ value: "workspaces", label: "Workspaces" \}/)
+  assert.match(settings, /\{ value: "plugins", label: "Plugins" \}/)
+  // Bat header (nf-md-bat, U+F0B5F) and a close that does not shadow Window.close.
+  assert.match(settings, /text: "\\udb82\\udf5f"/)
+  assert.match(settings, /function closeSettings\(\)/)
+  assert.doesNotMatch(settings, /onActivated: popup\.close\(\)/)
+  // Input goes only to the window body.
+  assert.match(settings, /mask: Region \{ item: windowBody \}/)
+  // The old card file is gone.
+  assert.throws(() => read("NyxiriSettings.qml"), /ENOENT/)
+})
+
+test("the bar opens settings from the bat, not from right-click or a card", () => {
+  const bar = read("Bar.qml")
+  assert.match(bar, /NyxiriSettingsWindow \{/)
+  assert.match(bar, /component NyxiriBatButton: Item/)
+  assert.match(bar, /text: "\\udb82\\udf5f"/)
+  assert.match(bar, /onClicked: root\.openNyxiriSettings\(screenName\)/)
+  assert.doesNotMatch(bar, /NyxiriSettings \{/)
+  assert.doesNotMatch(bar, /nyxiri-right-click/)
+  assert.doesNotMatch(bar, /nyxiri-settings-card/)
+  assert.doesNotMatch(bar, /acceptedButtons: Qt\.RightButton/)
 })

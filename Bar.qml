@@ -1887,6 +1887,27 @@ Item {
   }
   // NYXIRI-END nyxiri-ipc
 
+  // NYXIRI-BEGIN nyxiri-settings-window
+  // The standalone settings window: one instance for the whole bar, shown
+  // on the screen the settings were opened for (or the focused one). The
+  // bat button and the IPC open it; this just maps it.
+  NyxiriSettingsWindow {
+    id: nyxiriSettingsWindow
+    bar: root
+    screenName: root.nyxiriSettingsScreen
+    initialTab: root.nyxiriSettingsTab
+    visible: root.nyxiriSettingsOpen
+    screen: {
+      var name = root.nyxiriSettingsScreen || root.focusedScreenName()
+      var screens = Quickshell.screens || []
+      for (var i = 0; i < screens.length; i++) {
+        if (String(screens[i].name || "") === name) return screens[i]
+      }
+      return screens.length > 0 ? screens[0] : null
+    }
+  }
+  // NYXIRI-END nyxiri-settings-window
+
   // Hyprland's window list does not follow fullscreen on its own, and each
   // BarPanel reads it to drop its input under a fullscreen window.
   Connections {
@@ -2068,16 +2089,6 @@ Item {
       }
       // NYXIRI-END nyxiri-clear-surface
 
-      // NYXIRI-BEGIN nyxiri-right-click
-      // A right-click on empty bar surface opens Nyxiri's settings at this
-      // monitor. Widgets are drawn above this area, so their own clicks win.
-      MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        onClicked: root.openNyxiriSettings(barWindow.screen ? String(barWindow.screen.name || "") : "")
-      }
-      // NYXIRI-END nyxiri-right-click
-
       Loader {
         anchors.fill: parent
         sourceComponent: root.vertical ? verticalBar : horizontalBar
@@ -2094,27 +2105,6 @@ Item {
         }
       }
     }
-
-    // NYXIRI-BEGIN nyxiri-settings-card
-    // Only the surface that owns the open card maps it. `owner` routes
-    // outside-click dismissal back into the bar's external state instead of
-    // letting KeyboardPanel break the `open` binding.
-    QtObject {
-      id: nyxiriSettingsOwner
-      function close() { root.closeNyxiriSettings() }
-    }
-
-    NyxiriSettings {
-      id: nyxiriSettings
-      bar: root
-      anchorItem: barStrip
-      owner: nyxiriSettingsOwner
-      screenName: barWindow.screen ? String(barWindow.screen.name || "") : ""
-      initialTab: root.nyxiriSettingsTab
-      centerOnBar: true
-      open: root.nyxiriSettingsOpen && nyxiriSettings.screenName === root.nyxiriSettingsScreen
-    }
-    // NYXIRI-END nyxiri-settings-card
 
     PopupWindow {
       id: tooltipWindow
@@ -2205,10 +2195,10 @@ Item {
         // one continuous surface. Declared before the lists because z order
         // within the surface follows document order.
         NyxiriPill {
-          visible: root.nyxiriSectionMode("left") === "island" && leftModules.width > 0
-          x: leftModules.x - root.nyxiri.pill.padding
+          visible: root.nyxiriSectionMode("left") === "island"
+          x: batButton.x - root.nyxiri.pill.padding
           y: Math.round((barWindow.thickness - height) / 2)
-          width: leftModules.width + root.nyxiri.pill.padding * 2
+          width: (leftModules.x + leftModules.width) - batButton.x + root.nyxiri.pill.padding * 2
           height: barWindow.thickness - root.nyxiri.pill.inset * 2
         }
 
@@ -2231,6 +2221,16 @@ Item {
           drawn: !barWindow.centerBesideRight
         }
 
+        // NYXIRI-BEGIN nyxiri-bat-button
+        NyxiriBatButton {
+          id: batButton
+          screenName: String(barWindow.screen ? barWindow.screen.name : "")
+          anchors.left: parent.left
+          anchors.leftMargin: Style.space(8)
+          anchors.verticalCenter: parent.verticalCenter
+        }
+        // NYXIRI-END nyxiri-bat-button
+
         LeftModules {
           id: leftModules
           window: barWindow
@@ -2238,8 +2238,8 @@ Item {
           // NYXIRI-BEGIN nyxiri-screen-pass
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
-          anchors.left: parent.left
-          anchors.leftMargin: Style.space(8)
+          anchors.left: batButton.right
+          anchors.leftMargin: Style.space(4)
           anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -2286,11 +2286,11 @@ Item {
 
         // NYXIRI-BEGIN nyxiri-islands-vertical
         NyxiriPill {
-          visible: root.nyxiriSectionMode("left") === "island" && leftModules.height > 0
+          visible: root.nyxiriSectionMode("left") === "island"
           x: Math.round((barWindow.thickness - width) / 2)
-          y: leftModules.y - root.nyxiri.pill.padding
+          y: batButton.y - root.nyxiri.pill.padding
           width: barWindow.thickness - root.nyxiri.pill.inset * 2
-          height: leftModules.height + root.nyxiri.pill.padding * 2
+          height: (leftModules.y + leftModules.height) - batButton.y + root.nyxiri.pill.padding * 2
         }
 
         NyxiriPill {
@@ -2311,6 +2311,16 @@ Item {
           // NYXIRI-END nyxiri-screen-pass
         }
 
+        // NYXIRI-BEGIN nyxiri-bat-button
+        NyxiriBatButton {
+          id: batButton
+          screenName: String(barWindow.screen ? barWindow.screen.name : "")
+          anchors.top: parent.top
+          anchors.topMargin: Style.space(8)
+          anchors.horizontalCenter: parent.horizontalCenter
+        }
+        // NYXIRI-END nyxiri-bat-button
+
         LeftModules {
           id: leftModules
           window: barWindow
@@ -2318,8 +2328,8 @@ Item {
           // NYXIRI-BEGIN nyxiri-screen-pass
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
-          anchors.top: parent.top
-          anchors.topMargin: Style.space(8)
+          anchors.top: batButton.bottom
+          anchors.topMargin: Style.space(4)
           anchors.horizontalCenter: parent.horizontalCenter
         }
 
@@ -2607,6 +2617,39 @@ Item {
       : Math.max(0, Math.min(cornerRadius, Math.min(width, height) / 2))
   }
   // NYXIRI-END nyxiri-pill
+
+  // NYXIRI-BEGIN nyxiri-bat-button
+  // The bat (nf-md-bat, U+F0B5F) is the Nyxiri mark and the only way to open
+  // the settings window from the bar: right-click and the menu entry are
+  // gone. It sits first in the left section, on every surface. In island
+  // mode the section pill spans it; in mini mode it draws its own pill.
+  component NyxiriBatButton: Item {
+    property string screenName: ""
+
+    implicitWidth: Style.space(28)
+    implicitHeight: Style.space(28)
+
+    NyxiriPill {
+      anchors.fill: parent
+      visible: root.nyxiriSectionMode("left") !== "island"
+    }
+
+    Text {
+      anchors.centerIn: parent
+      // nf-md-bat, U+F0B5F, in the bar font (JetBrainsMono Nerd Font).
+      text: "\udb82\udf5f"
+      color: root.barForeground
+      font.family: root.fontFamily
+      font.pixelSize: Style.space(16)
+      textFormat: Text.PlainText
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: root.openNyxiriSettings(screenName)
+    }
+  }
+  // NYXIRI-END nyxiri-bat-button
 
   // NYXIRI-BEGIN nyxiri-section-modules
   component LeftModules: ModuleList {
