@@ -79,10 +79,12 @@ test("the pill opacity slider is the fill level itself, so 100% means solid", ()
 
 test("section headers are bigger with room under them, and sliders put the label above", () => {
   const settings = read("NyxiriSettingsWindow.qml")
-  // SectionLabel is title size now, not caption, with space under it.
+  // SectionLabel is title size now, not caption, with space under it and
+  // a full gap above it, so sections read as separate blocks.
   assert.match(settings, /component SectionLabel: Text/)
   assert.match(settings, /font\.pixelSize: Style\.font\.title/)
   assert.match(settings, /bottomPadding: Style\.spacing\.md/)
+  assert.match(settings, /topPadding: Style\.space\(16\)/)
   // Sub-headers get the same treatment one step smaller.
   assert.match(settings, /component SubLabel: Text/)
   assert.match(settings, /font\.pixelSize: Style\.font\.body/)
@@ -91,10 +93,12 @@ test("section headers are bigger with room under them, and sliders put the label
   assert.match(settings, /label: "Background"/)
   assert.match(settings, /label: "Border"/)
   assert.match(settings, /label: "Padding"/)
-  // Tab columns breathe instead of packing rows tight.
-  assert.match(settings, /visible: popup\.tab === "appearance"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
-  assert.match(settings, /visible: popup\.tab === "monitors"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
-  assert.match(settings, /visible: popup\.tab === "plugins"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
+  // Tab columns breathe instead of packing rows tight: double the old
+  // lg spacing, so the gap between sections is twice what it was.
+  assert.match(settings, /visible: popup\.tab === "appearance"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "workspaces"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "monitors"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "plugins"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
 })
 
 test("the settings card forces keyboard focus into its text fields on click", () => {
@@ -190,8 +194,8 @@ test("the plugins tab shows a row for every plugin even when kinds are unknown",
 test("the plugins tab sorts active plugins first, then disabled, each alphabetical", () => {
   const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /readonly property var sortedPlugins/)
-  assert.match(settings, /model: popup\.activePluginList/)
-  assert.match(settings, /model: popup\.disabledPluginList/)
+  // One Repeater whose model switches on the sub-tab; both lists feed it.
+  assert.match(settings, /model: popup\.pluginGroup === "active" \? popup\.activePluginList : popup\.disabledPluginList/)
   assert.doesNotMatch(settings, /model: popup\.sortedPlugins/)
   assert.match(settings, /var ae = a\.enabled === true \? 0 : 1/)
   assert.match(settings, /String\(a\.name \|\| a\.id \|\| ""\)\.toLowerCase\(\)/)
@@ -481,12 +485,14 @@ test("the Widgets tab is now the Plugins tab, with Active and Disabled sub-tabs"
   assert.match(settings, /selected: popup\.pluginGroup === "disabled"/)
   assert.match(settings, /onClicked: popup\.pluginGroup = "active"/)
   assert.match(settings, /onClicked: popup\.pluginGroup = "disabled"/)
-  assert.match(settings, /model: popup\.activePluginList\n\s+visible: popup\.pluginGroup === "active"/)
-  assert.match(settings, /model: popup\.disabledPluginList\n\s+visible: popup\.pluginGroup === "disabled"/)
+  // One Repeater, model switches on the sub-tab. A `visible` gate on a
+  // Repeater does not hide its delegates (they belong to the parent
+  // Column), which is why Disabled showed the wrong rows.
+  assert.match(settings, /model: popup\.pluginGroup === "active" \? popup\.activePluginList : popup\.disabledPluginList/)
+  assert.doesNotMatch(settings, /visible: popup\.pluginGroup === "active"/)
+  assert.doesNotMatch(settings, /visible: popup\.pluginGroup === "disabled"/)
   assert.doesNotMatch(settings, /text: "ACTIVE"/)
   assert.doesNotMatch(settings, /text: "DISABLED"/)
-  assert.match(settings, /model: popup\.activePluginList/)
-  assert.match(settings, /model: popup\.disabledPluginList/)
   // One shared row component, not two copies of the delegate.
   assert.match(settings, /component PluginRow: Column/)
   assert.match(settings, /delegate: PluginRow \{\}/)

@@ -333,6 +333,10 @@ PanelWindow {
 
   // Section headers: a full window, not a popup card, so they read as
   // headers, not fine print, with room under them before the controls.
+  // Section headers are title size with room under them, and a full gap
+  // above them too: the space between one section's content and the next
+  // header is the tab Column spacing plus this topPadding, so sections
+  // read as separate blocks instead of one continuous list.
   component SectionLabel: Text {
     color: Qt.darker(popup.bar.foreground, 1.35)
     font.family: popup.bar.fontFamily
@@ -340,6 +344,7 @@ PanelWindow {
     font.bold: true
     font.letterSpacing: 0.4
     textFormat: Text.PlainText
+    topPadding: Style.space(16)
     bottomPadding: Style.spacing.md
   }
 
@@ -704,7 +709,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "appearance"
               width: parent.width
-              spacing: Style.spacing.lg
+              spacing: Style.space(16)
 
               SectionLabel { text: "SECTION PILLS" }
 
@@ -1082,7 +1087,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "workspaces"
               width: parent.width
-              spacing: Style.spacing.lg
+              spacing: Style.space(16)
 
               SectionLabel { text: "WORKSPACES" }
 
@@ -1246,7 +1251,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "monitors"
               width: parent.width
-              spacing: Style.spacing.lg
+              spacing: Style.space(16)
 
               SectionLabel { text: "MONITORS" }
 
@@ -1369,7 +1374,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "plugins"
               width: parent.width
-              spacing: Style.spacing.lg
+              spacing: Style.space(16)
 
               Row {
                 width: body.width
@@ -1386,6 +1391,7 @@ PanelWindow {
                   text: popup.pluginsLoading ? "Loading…" : "Refresh"
                   bordered: true
                   foreground: popup.bar.foreground
+                  anchors.verticalCenter: parent.verticalCenter
                   onClicked: popup.refreshPlugins()
                 }
               }
@@ -1535,15 +1541,14 @@ PanelWindow {
                 }
               }
 
+              // One Repeater with a conditional model: a Repeater's
+              // delegates are children of the parent Column, not the
+              // Repeater, so `visible` on a Repeater does not hide its
+              // delegates. Switching the model swaps the rows, which is
+              // why the Disabled sub-tab showed the active list (or
+              // nothing) instead of just the disabled plugins.
               Repeater {
-                model: popup.activePluginList
-                visible: popup.pluginGroup === "active"
-                delegate: PluginRow {}
-              }
-
-              Repeater {
-                model: popup.disabledPluginList
-                visible: popup.pluginGroup === "disabled"
+                model: popup.pluginGroup === "active" ? popup.activePluginList : popup.disabledPluginList
                 delegate: PluginRow {}
               }
 
