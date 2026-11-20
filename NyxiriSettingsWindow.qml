@@ -596,7 +596,7 @@ PanelWindow {
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.right: parent.right
-          spacing: Style.spacing.sm
+          spacing: Style.spacing.md
 
           Row {
             spacing: Style.spacing.sm
@@ -606,7 +606,7 @@ PanelWindow {
               text: "\udb82\udf5f"
               color: popup.bar.foreground
               font.family: popup.bar.fontFamily
-              font.pixelSize: Style.space(22)
+              font.pixelSize: Style.space(44)
               textFormat: Text.PlainText
             }
 
