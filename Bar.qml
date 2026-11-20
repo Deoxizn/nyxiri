@@ -2625,29 +2625,39 @@ Item {
   // the settings window from the bar: right-click and the menu entry are
   // gone. It sits last in the right section, on every surface. In island
   // mode the section pill spans it; in mini mode it draws its own pill.
-  // The button is the bar's full thickness (26 horizontal, 28 vertical):
-  // the old hardcoded 28 was taller than the bar, so the pill drew a
-  // circle outlining outside the bar. The button is centered, so full
-  // thickness fills the bar exactly and never exceeds it; the glyph is
-  // the full button size, and a glyph's ink is smaller than its em box,
-  // so the visible bat stays inside the bar and inside the island pill.
-  // Its own pill follows the right section's mode, not the left's: with
-  // left mini and right island it drew twice, once on its own and once
-  // inside the island pill.
+  // Measured in JetBrainsMono Nerd Font: the bat's ink is 0.938em wide
+  // on a 0.6em advance, so the wing overhangs the Text box to the right
+  // and the ink sits 0.17em right of the box centre; its visual mass
+  // sits 0.05em above the line centre (the broad wings are at the top).
+  // The Text is shifted left by the overhang and down by the mass offset
+  // so the bat's visual centre lands on the bar's centre, and the button
+  // is longer than the bar is thick (1.35x) so the wingspan fits inside
+  // it with room instead of reaching the bar's edge. On a vertical bar
+  // the glyph is rotated 90 degrees so the wingspan runs along the bar's
+  // length, the button is taller than wide, and the offsets rotate with it.
   component NyxiriBatButton: Item {
     property string screenName: ""
     // The bar's thickness on this surface (barSize, or more where a notch
     // floor raises it), passed by the instantiation.
     property int thickness: root.barSize
     readonly property int batSize: Math.max(Style.space(16), thickness)
+    // Long side of the button, along the bar: holds the 0.938em wingspan
+    // with room on both sides. Short side stays the bar thickness.
+    readonly property int batLength: Math.round(batSize * 1.35)
+    // Half the ink's right overhang past its advance (0.338em), to centre
+    // the ink in the button; and the visual-mass offset above the line
+    // centre (0.05em), to centre the bat on the bar. Both scale with the
+    // glyph size.
+    readonly property real inkShiftX: batSize * 0.17
+    readonly property real inkShiftY: batSize * 0.05
     // The bar's tooltip system shows a tooltip for a target whose
     // tooltipHovered is true. The bat is a bar-internal button, so it
     // drives root.showTooltip directly instead of through the plugin API
     // that widget plugins use (their WidgetButton does the same).
     readonly property bool tooltipHovered: batMouse.containsMouse
 
-    implicitWidth: batSize
-    implicitHeight: batSize
+    implicitWidth: root.vertical ? batSize : batLength
+    implicitHeight: root.vertical ? batLength : batSize
 
     NyxiriPill {
       anchors.fill: parent
@@ -2656,10 +2666,19 @@ Item {
 
     Text {
       anchors.centerIn: parent
+      // Horizontal bar: shift left by the ink overhang so the wingspan is
+      // centred in the button, and down by the visual-mass offset so the
+      // bat is centred on the bar. Vertical bar: the glyph is rotated 90
+      // degrees clockwise, so the offsets rotate with it (the overhang
+      // points down, the mass offset points right); the values swap and
+      // the signs flip to keep the ink centred.
+      anchors.horizontalCenterOffset: root.vertical ? -inkShiftY : -inkShiftX
+      anchors.verticalCenterOffset: root.vertical ? -inkShiftX : inkShiftY
+      rotation: root.vertical ? 90 : 0
       // nf-md-bat, U+F0B5F, in the bar font (JetBrainsMono Nerd Font).
       // Foreground, not accent: the accent made it harder to see.
-      // The glyph fills the button; its ink is smaller than its em box,
-      // so the visible bat stays inside the bar.
+      // The glyph is the full button size on its short side; its ink is
+      // smaller than its em box, so the visible bat stays inside the bar.
       text: "\udb82\udf5f"
       color: root.barForeground
       font.family: root.fontFamily

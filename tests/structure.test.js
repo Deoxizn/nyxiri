@@ -532,11 +532,10 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
 test("the bat button fits inside the bar thickness and its pill follows the right section", () => {
   const bar = read("Bar.qml")
   // The bar is 26 tall horizontal (28 vertical); the old hardcoded 28
-  // drew a circle outlining outside the bar. The button is the bar's
-  // full thickness on its surface: centered, so it fills the bar
-  // exactly and never exceeds it, and BorderSurface draws its border
-  // inside the rect. The glyph is the full button size; a glyph's ink
-  // is smaller than its em box, so the visible bat stays inside.
+  // drew a circle outlining outside the bar. The button's short side is
+  // the bar's full thickness on its surface: centered, so it fills the
+  // bar exactly and never exceeds it, and BorderSurface draws its border
+  // inside the rect. The glyph is the full button size on its short side.
   assert.match(bar, /property int thickness: root\.barSize/)
   assert.match(bar, /thickness: barWindow\.thickness/)
   assert.match(bar, /readonly property int batSize: Math\.max\(Style\.space\(16\), thickness\)/)
@@ -555,4 +554,18 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   // the old check drew the pill twice (own pill + island pill).
   assert.match(bar, /nyxiriSectionMode\("right"\) !== "island"/)
   assert.doesNotMatch(bar, /nyxiriSectionMode\("left"\) !== "island"/)
+  // The bat's ink is wider than its advance (0.938em on a 0.6em advance),
+  // so the wing overhangs the Text box and the button is longer than the
+  // bar is thick to hold the wingspan; the Text is shifted to centre the
+  // ink (left by the overhang, down by the visual-mass offset), and on a
+  // vertical bar the glyph rotates 90 degrees so the wingspan runs along
+  // the bar's length, with the offsets rotated with it.
+  assert.match(bar, /readonly property int batLength: Math\.round\(batSize \* 1\.35\)/)
+  assert.match(bar, /implicitWidth: root\.vertical \? batSize : batLength/)
+  assert.match(bar, /implicitHeight: root\.vertical \? batLength : batSize/)
+  assert.match(bar, /readonly property real inkShiftX: batSize \* 0\.17/)
+  assert.match(bar, /readonly property real inkShiftY: batSize \* 0\.05/)
+  assert.match(bar, /anchors\.horizontalCenterOffset: root\.vertical \? -inkShiftY : -inkShiftX/)
+  assert.match(bar, /anchors\.verticalCenterOffset: root\.vertical \? -inkShiftX : inkShiftY/)
+  assert.match(bar, /rotation: root\.vertical \? 90 : 0/)
 })
