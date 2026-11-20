@@ -2227,7 +2227,7 @@ Item {
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           thickness: barWindow.thickness
           anchors.right: parent.right
-          anchors.rightMargin: Style.space(8)
+          anchors.rightMargin: Style.space(16)
           anchors.verticalCenter: parent.verticalCenter
         }
         // NYXIRI-END nyxiri-bat-button
@@ -2318,7 +2318,7 @@ Item {
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           thickness: barWindow.thickness
           anchors.bottom: parent.bottom
-          anchors.bottomMargin: Style.space(8)
+          anchors.bottomMargin: Style.space(16)
           anchors.horizontalCenter: parent.horizontalCenter
         }
         // NYXIRI-END nyxiri-bat-button
@@ -2625,17 +2625,21 @@ Item {
   // the settings window from the bar: right-click and the menu entry are
   // gone. It sits last in the right section, on every surface. In island
   // mode the section pill spans it; in mini mode it draws its own pill.
-  // The button sizes from the bar's own thickness (26 horizontal, 28
-  // vertical): the old hardcoded 28 was taller than the bar, so the pill
-  // drew a circle outlining outside the bar. Its own pill follows the
-  // right section's mode, not the left's: with left mini and right island
-  // it drew twice, once on its own and once inside the island pill.
+  // The button is the bar's full thickness (26 horizontal, 28 vertical):
+  // the old hardcoded 28 was taller than the bar, so the pill drew a
+  // circle outlining outside the bar. The button is centered, so full
+  // thickness fills the bar exactly and never exceeds it; the glyph is
+  // the full button size, and a glyph's ink is smaller than its em box,
+  // so the visible bat stays inside the bar and inside the island pill.
+  // Its own pill follows the right section's mode, not the left's: with
+  // left mini and right island it drew twice, once on its own and once
+  // inside the island pill.
   component NyxiriBatButton: Item {
     property string screenName: ""
     // The bar's thickness on this surface (barSize, or more where a notch
     // floor raises it), passed by the instantiation.
     property int thickness: root.barSize
-    readonly property int batSize: Math.max(Style.space(16), thickness - root.nyxiri.pill.inset * 2)
+    readonly property int batSize: Math.max(Style.space(16), thickness)
     // The bar's tooltip system shows a tooltip for a target whose
     // tooltipHovered is true. The bat is a bar-internal button, so it
     // drives root.showTooltip directly instead of through the plugin API
@@ -2653,12 +2657,13 @@ Item {
     Text {
       anchors.centerIn: parent
       // nf-md-bat, U+F0B5F, in the bar font (JetBrainsMono Nerd Font).
-      // Accent, not foreground: the bat is the settings toggle, and it
-      // needs to read as a control at a glance, not blend in as decoration.
+      // Foreground, not accent: the accent made it harder to see.
+      // The glyph fills the button; its ink is smaller than its em box,
+      // so the visible bat stays inside the bar.
       text: "\udb82\udf5f"
-      color: Commons.Color.accent
+      color: root.barForeground
       font.family: root.fontFamily
-      font.pixelSize: Math.round(batSize * 0.85)
+      font.pixelSize: batSize
       textFormat: Text.PlainText
     }
 

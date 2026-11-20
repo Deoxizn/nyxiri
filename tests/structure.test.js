@@ -532,13 +532,24 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
 test("the bat button fits inside the bar thickness and its pill follows the right section", () => {
   const bar = read("Bar.qml")
   // The bar is 26 tall horizontal (28 vertical); the old hardcoded 28
-  // drew a circle outlining outside the bar. The button sizes from the
-  // bar's own thickness on its surface instead.
+  // drew a circle outlining outside the bar. The button is the bar's
+  // full thickness on its surface: centered, so it fills the bar
+  // exactly and never exceeds it, and BorderSurface draws its border
+  // inside the rect. The glyph is the full button size; a glyph's ink
+  // is smaller than its em box, so the visible bat stays inside.
   assert.match(bar, /property int thickness: root\.barSize/)
   assert.match(bar, /thickness: barWindow\.thickness/)
-  assert.match(bar, /thickness - root\.nyxiri\.pill\.inset \* 2/)
+  assert.match(bar, /readonly property int batSize: Math\.max\(Style\.space\(16\), thickness\)/)
+  assert.match(bar, /font\.pixelSize: batSize/)
+  assert.doesNotMatch(bar, /batSize \* 0\.85/)
   assert.doesNotMatch(bar, /implicitWidth: Style\.space\(28\)/)
   assert.doesNotMatch(bar, /implicitHeight: Style\.space\(28\)/)
+  // Foreground, not accent: the accent made the bat harder to see.
+  // Pinned to the bat glyph itself, not just any foreground in the file.
+  assert.match(bar, /text: "\\udb82\\udf5f"\n\s+color: root\.barForeground/)
+  // The bat is inset from the bar's edge, not flush against it.
+  assert.match(bar, /anchors\.rightMargin: Style\.space\(16\)/)
+  assert.match(bar, /anchors\.bottomMargin: Style\.space\(16\)/)
   // The bat sits last in the right section, so its own pill follows the
   // right section's mode, not the left's: with left mini and right island
   // the old check drew the pill twice (own pill + island pill).
