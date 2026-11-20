@@ -2196,17 +2196,17 @@ Item {
         // within the surface follows document order.
         NyxiriPill {
           visible: root.nyxiriSectionMode("left") === "island"
-          x: batButton.x - root.nyxiri.pill.padding
+          x: leftModules.x - root.nyxiri.pill.padding
           y: Math.round((barWindow.thickness - height) / 2)
-          width: (leftModules.x + leftModules.width) - batButton.x + root.nyxiri.pill.padding * 2
+          width: leftModules.width + root.nyxiri.pill.padding * 2
           height: barWindow.thickness - root.nyxiri.pill.inset * 2
         }
 
         NyxiriPill {
-          visible: root.nyxiriSectionMode("right") === "island" && rightModules.width > 0
+          visible: root.nyxiriSectionMode("right") === "island"
           x: rightModules.x - root.nyxiri.pill.padding
           y: Math.round((barWindow.thickness - height) / 2)
-          width: rightModules.width + root.nyxiri.pill.padding * 2
+          width: (batButton.x + batButton.width) - rightModules.x + root.nyxiri.pill.padding * 2
           height: barWindow.thickness - root.nyxiri.pill.inset * 2
         }
         // NYXIRI-END nyxiri-islands-horizontal
@@ -2225,8 +2225,8 @@ Item {
         NyxiriBatButton {
           id: batButton
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
-          anchors.left: parent.left
-          anchors.leftMargin: Style.space(8)
+          anchors.right: parent.right
+          anchors.rightMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
         }
         // NYXIRI-END nyxiri-bat-button
@@ -2238,8 +2238,8 @@ Item {
           // NYXIRI-BEGIN nyxiri-screen-pass
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
-          anchors.left: batButton.right
-          anchors.leftMargin: Style.space(4)
+          anchors.left: parent.left
+          anchors.leftMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -2250,8 +2250,8 @@ Item {
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
           id: rightModules
-          anchors.right: parent.right
-          anchors.rightMargin: Style.space(8)
+          anchors.right: batButton.left
+          anchors.rightMargin: Style.space(4)
           anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -2288,17 +2288,17 @@ Item {
         NyxiriPill {
           visible: root.nyxiriSectionMode("left") === "island"
           x: Math.round((barWindow.thickness - width) / 2)
-          y: batButton.y - root.nyxiri.pill.padding
+          y: leftModules.y - root.nyxiri.pill.padding
           width: barWindow.thickness - root.nyxiri.pill.inset * 2
-          height: (leftModules.y + leftModules.height) - batButton.y + root.nyxiri.pill.padding * 2
+          height: leftModules.height + root.nyxiri.pill.padding * 2
         }
 
         NyxiriPill {
-          visible: root.nyxiriSectionMode("right") === "island" && rightModules.height > 0
+          visible: root.nyxiriSectionMode("right") === "island"
           x: Math.round((barWindow.thickness - width) / 2)
           y: rightModules.y - root.nyxiri.pill.padding
           width: barWindow.thickness - root.nyxiri.pill.inset * 2
-          height: rightModules.height + root.nyxiri.pill.padding * 2
+          height: (batButton.y + batButton.height) - rightModules.y + root.nyxiri.pill.padding * 2
         }
         // NYXIRI-END nyxiri-islands-vertical
 
@@ -2315,8 +2315,8 @@ Item {
         NyxiriBatButton {
           id: batButton
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
-          anchors.top: parent.top
-          anchors.topMargin: Style.space(8)
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
         }
         // NYXIRI-END nyxiri-bat-button
@@ -2328,8 +2328,8 @@ Item {
           // NYXIRI-BEGIN nyxiri-screen-pass
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
-          anchors.top: batButton.bottom
-          anchors.topMargin: Style.space(4)
+          anchors.top: parent.top
+          anchors.topMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
         }
 
@@ -2340,8 +2340,8 @@ Item {
           // NYXIRI-BEGIN nyxiri-screen-pass
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
           // NYXIRI-END nyxiri-screen-pass
-          anchors.bottom: parent.bottom
-          anchors.bottomMargin: Style.space(8)
+          anchors.bottom: batButton.top
+          anchors.bottomMargin: Style.space(4)
           anchors.horizontalCenter: parent.horizontalCenter
         }
       }
@@ -2621,7 +2621,7 @@ Item {
   // NYXIRI-BEGIN nyxiri-bat-button
   // The bat (nf-md-bat, U+F0B5F) is the Nyxiri mark and the only way to open
   // the settings window from the bar: right-click and the menu entry are
-  // gone. It sits first in the left section, on every surface. In island
+  // gone. It sits last in the right section, on every surface. In island
   // mode the section pill spans it; in mini mode it draws its own pill.
   component NyxiriBatButton: Item {
     property string screenName: ""
