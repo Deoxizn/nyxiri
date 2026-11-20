@@ -2636,6 +2636,11 @@ Item {
     // floor raises it), passed by the instantiation.
     property int thickness: root.barSize
     readonly property int batSize: Math.max(Style.space(16), thickness - root.nyxiri.pill.inset * 2)
+    // The bar's tooltip system shows a tooltip for a target whose
+    // tooltipHovered is true. The bat is a bar-internal button, so it
+    // drives root.showTooltip directly instead of through the plugin API
+    // that widget plugins use (their WidgetButton does the same).
+    readonly property bool tooltipHovered: batMouse.containsMouse
 
     implicitWidth: batSize
     implicitHeight: batSize
@@ -2648,15 +2653,21 @@ Item {
     Text {
       anchors.centerIn: parent
       // nf-md-bat, U+F0B5F, in the bar font (JetBrainsMono Nerd Font).
+      // Accent, not foreground: the bat is the settings toggle, and it
+      // needs to read as a control at a glance, not blend in as decoration.
       text: "\udb82\udf5f"
-      color: root.barForeground
+      color: Commons.Color.accent
       font.family: root.fontFamily
       font.pixelSize: Math.round(batSize * 0.6)
       textFormat: Text.PlainText
     }
 
     MouseArea {
+      id: batMouse
       anchors.fill: parent
+      hoverEnabled: true
+      onEntered: root.showTooltip(parent, "Nyxiri Settings")
+      onExited: root.hideTooltip(parent)
       onClicked: root.openNyxiriSettings(screenName)
     }
   }
