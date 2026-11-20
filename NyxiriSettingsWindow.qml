@@ -80,6 +80,56 @@ PanelWindow {
   property string lastAction: ""
   property string pluginProbeError: ""
 
+  // Whether the plugin probe has completed successfully: only then is the
+  // plugins list a reliable picture of what is installed. While it is still
+  // loading, or it errored, or it came back empty, the list is not evidence
+  // that a plugin is absent, so nothing is hidden.
+  readonly property bool probeSettled: !popup.pluginsLoading && popup.pluginProbeError === "" && popup.plugins.length > 0
+
+  // Whether a plugin is installed and enabled, by its id. The probe list
+  // carries the plugin id (and pluginId on registry-fallback rows); the
+  // registry keys can carry a "#n" suffix, so both are matched through
+  // baseWidgetId. A disabled plugin counts as absent: its widget is not on
+  // the bar, so its settings are dead, and disabling it hides its tab.
+  function hasPlugin(id) {
+    var wanted = String(id || "")
+    if (!wanted) return false
+    for (var i = 0; i < popup.plugins.length; i++) {
+      var p = popup.plugins[i]
+      if (!p || p.enabled !== true) continue
+      if (Nyxiri.baseWidgetId(p.id) === wanted || Nyxiri.baseWidgetId(p.pluginId) === wanted) return true
+    }
+    return false
+  }
+
+  // Tabs and sections for plugins that may not be installed. While the
+  // probe has not settled, everything shows (the current behavior), so the
+  // Workspaces tab never flashes away on first open even when its plugin
+  // is installed. Once settled, a missing plugin's tab or section goes.
+  readonly property bool showWorkspacesTab: !probeSettled || hasPlugin("pizza.dirty.nyxiri-workspaces")
+  readonly property bool showMenuTrigger: !probeSettled || hasPlugin("pizza.dirty.nyxiri-menu")
+
+  // The sidebar's sections, with Workspaces only when its plugin is
+  // installed (and the probe has settled). Appearance, Monitors, and
+  // Plugins are the bar itself and the plugin manager, so they are
+  // always present.
+  readonly property var sidebarTabs: {
+    var tabs = [
+      { value: "appearance", label: "Appearance" },
+      { value: "monitors", label: "Monitors" }
+    ]
+    if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
+    tabs.push({ value: "plugins", label: "Plugins" })
+    return tabs
+  }
+
+  // If the current tab is one whose plugin is not installed (or got
+  // disabled while the window is open), fall back to Appearance so the
+  // window never shows a hidden tab's content with no way back.
+  function ensureVisibleTab() {
+    if (tab === "workspaces" && probeSettled && !hasPlugin("pizza.dirty.nyxiri-workspaces")) tab = "appearance"
+  }
+
   // Active plugins first, then disabled, each group alphabetical by name.
   // The probe returns install order, which buries the enabled ones at the
   // bottom of a long list. Re-sorted on every probe refresh (every toggle
@@ -317,8 +367,14 @@ PanelWindow {
   onInitialTabChanged: if (visible) tab = initialTab
   onTabChanged: {
     if (tab === "plugins" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
+    ensureVisibleTab()
     if (tab === "workspaces") refreshClassicMode()
   }
+  // When the probe settles, a tab whose plugin turned out not to be
+  // installed (or got disabled while the window is open) is hidden, so
+  // move off it. ensureVisibleTab is a no-op while the probe has not
+  // settled or the plugin is there.
+  onProbeSettledChanged: ensureVisibleTab()
 
   // This was a PopupCard (xdg-popup) and its text fields never took input:
   // xdg-popups only receive keys after a click routes focus through their
@@ -632,12 +688,7 @@ PanelWindow {
           }
 
           Repeater {
-            model: [
-              { value: "appearance", label: "Appearance" },
-              { value: "monitors", label: "Monitors" },
-              { value: "workspaces", label: "Workspaces" },
-              { value: "plugins", label: "Plugins" }
-            ]
+            model: popup.sidebarTabs
 
             delegate: Button {
               required property var modelData
@@ -876,174 +927,185 @@ PanelWindow {
                 onReleased: function(value) { popup.setPill({ padding: value }) }
               }
 
-              // The menu fork's trigger is a separate plugin; only offer these
-              // controls when it is actually on the bar.
-              SectionLabel {
-                visible: popup.bar.nyxiriMenuAvailable
-                text: "MENU TRIGGER"
-              }
+              // The menu trigger's settings belong to a separate plugin
+              // (pizza.dirty.nyxiri-menu). The whole section is one unit:
+              // it shows only when the menu plugin is installed and its
+              // trigger is on the bar, and hides without a gap or a
+              // leftover header when it is not.
+              Column {
+                visible: popup.showMenuTrigger && popup.bar.nyxiriMenuAvailable
+                width: parent.width
+                spacing: Style.space(16)
 
-              // Dropdown popups are clipped by this card's window, so the
-              // last option falls off the bottom edge, and their clicks
-              // clear the card's focus grab, so picking an option closed
-              // the card. Choice rows have neither problem, same as Mode
-              // and Style below.
-              SubLabel {
-                visible: popup.bar.nyxiriMenuAvailable
-                text: "Icon mode"
-              }
+                // The menu fork's trigger is a separate plugin; only offer these
+                // controls when it is installed and actually on the bar.
+                SectionLabel {
+                  visible: popup.bar.nyxiriMenuAvailable
+                  text: "MENU TRIGGER"
+                }
 
-              Row {
-                visible: popup.bar.nyxiriMenuAvailable
-                width: body.width
-                spacing: Style.spacing.xs
+                // Dropdown popups are clipped by this card's window, so the
+                // last option falls off the bottom edge, and their clicks
+                // clear the card's focus grab, so picking an option closed
+                // the card. Choice rows have neither problem, same as Mode
+                // and Style below.
+                SubLabel {
+                  visible: popup.bar.nyxiriMenuAvailable
+                  text: "Icon mode"
+                }
 
-                Repeater {
-                  model: [
-                    { value: "glyph", label: "Glyph" },
-                    { value: "image", label: "Image / SVG" },
-                    { value: "wordmark", label: "Wordmark" }
-                  ]
+                Row {
+                  visible: popup.bar.nyxiriMenuAvailable
+                  width: body.width
+                  spacing: Style.spacing.xs
 
-                  delegate: Button {
-                    required property var modelData
-                    width: (parent.width - parent.spacing * 2) / 3
-                    text: modelData.label
-                    selected: popup.menuSetting("iconMode", "glyph") === modelData.value
-                    bordered: !selected
-                    foreground: popup.bar.foreground
-                    onClicked: popup.setMenu({ iconMode: modelData.value })
+                  Repeater {
+                    model: [
+                      { value: "glyph", label: "Glyph" },
+                      { value: "image", label: "Image / SVG" },
+                      { value: "wordmark", label: "Wordmark" }
+                    ]
+
+                    delegate: Button {
+                      required property var modelData
+                      width: (parent.width - parent.spacing * 2) / 3
+                      text: modelData.label
+                      selected: popup.menuSetting("iconMode", "glyph") === modelData.value
+                      bordered: !selected
+                      foreground: popup.bar.foreground
+                      onClicked: popup.setMenu({ iconMode: modelData.value })
+                    }
                   }
                 }
-              }
 
-              SubLabel {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
-                text: "Glyph"
-              }
+                SubLabel {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
+                  text: "Glyph"
+                }
 
-              Row {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
-                width: body.width
-                spacing: Style.spacing.xs
+                Row {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
+                  width: body.width
+                  spacing: Style.spacing.xs
 
-                Repeater {
-                  model: [
-                    { value: "omarchy", label: "Omarchy" },
-                    { value: "arch", label: "Arch" },
-                    { value: "custom", label: "Custom" }
-                  ]
+                  Repeater {
+                    model: [
+                      { value: "omarchy", label: "Omarchy" },
+                      { value: "arch", label: "Arch" },
+                      { value: "custom", label: "Custom" }
+                    ]
 
-                  delegate: Button {
-                    required property var modelData
-                    width: (parent.width - parent.spacing * 2) / 3
-                    text: modelData.label
-                    selected: popup.menuSetting("glyph", "omarchy") === modelData.value
-                    bordered: !selected
-                    foreground: popup.bar.foreground
-                    onClicked: popup.setMenu({ glyph: modelData.value })
+                    delegate: Button {
+                      required property var modelData
+                      width: (parent.width - parent.spacing * 2) / 3
+                      text: modelData.label
+                      selected: popup.menuSetting("glyph", "omarchy") === modelData.value
+                      bordered: !selected
+                      foreground: popup.bar.foreground
+                      onClicked: popup.setMenu({ glyph: modelData.value })
+                    }
                   }
                 }
-              }
 
-              FocusField {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
-                  && popup.menuSetting("glyph", "omarchy") === "custom"
-                width: body.width
-                settingText: popup.menuSetting("customGlyph", "")
-                placeholderText: "Glyph"
-                foreground: popup.bar.foreground
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.body
-                onCommit: function(value) { popup.setMenu({ customGlyph: value }) }
-              }
+                FocusField {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
+                    && popup.menuSetting("glyph", "omarchy") === "custom"
+                  width: body.width
+                  settingText: popup.menuSetting("customGlyph", "")
+                  placeholderText: "Glyph"
+                  foreground: popup.bar.foreground
+                  font.family: popup.bar.fontFamily
+                  font.pixelSize: Style.font.body
+                  onCommit: function(value) { popup.setMenu({ customGlyph: value }) }
+                }
 
-              FocusField {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
-                  && popup.menuSetting("glyph", "omarchy") === "custom"
-                width: body.width
-                settingText: popup.menuSetting("iconFont", "omarchy")
-                placeholderText: "Font family"
-                foreground: popup.bar.foreground
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.body
-                onCommit: function(value) { popup.setMenu({ iconFont: value }) }
-              }
+                FocusField {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
+                    && popup.menuSetting("glyph", "omarchy") === "custom"
+                  width: body.width
+                  settingText: popup.menuSetting("iconFont", "omarchy")
+                  placeholderText: "Font family"
+                  foreground: popup.bar.foreground
+                  font.family: popup.bar.fontFamily
+                  font.pixelSize: Style.font.body
+                  onCommit: function(value) { popup.setMenu({ iconFont: value }) }
+                }
 
-              FocusField {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
-                width: body.width
-                settingText: popup.menuSetting("iconSource", "")
-                placeholderText: "/path/to/icon.svg"
-                foreground: popup.bar.foreground
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.body
-                onCommit: function(value) { popup.setMenu({ iconSource: value }) }
-              }
+                FocusField {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
+                  width: body.width
+                  settingText: popup.menuSetting("iconSource", "")
+                  placeholderText: "/path/to/icon.svg"
+                  foreground: popup.bar.foreground
+                  font.family: popup.bar.fontFamily
+                  font.pixelSize: Style.font.body
+                  onCommit: function(value) { popup.setMenu({ iconSource: value }) }
+                }
 
-              // Wordmark presets are one-tap fills of the same field: the
-              // widget renders every wordmark uppercased with wide
-              // letterspacing, Shibumi-preview style, so the presets are
-              // canned strings, not image assets. Custom text still works.
-              SubLabel {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
-                text: "Wordmark"
-              }
+                // Wordmark presets are one-tap fills of the same field: the
+                // widget renders every wordmark uppercased with wide
+                // letterspacing, Shibumi-preview style, so the presets are
+                // canned strings, not image assets. Custom text still works.
+                SubLabel {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
+                  text: "Wordmark"
+                }
 
-              Row {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
-                width: body.width
-                spacing: Style.spacing.xs
+                Row {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
+                  width: body.width
+                  spacing: Style.spacing.xs
 
-                Repeater {
-                  model: [
-                    { value: "Arch", label: "Arch" },
-                    { value: "Hyprland", label: "Hyprland" },
-                    { value: "Nyxiri", label: "Nyxiri" },
-                    { value: "Omarchy", label: "Omarchy" }
-                  ]
+                  Repeater {
+                    model: [
+                      { value: "Arch", label: "Arch" },
+                      { value: "Hyprland", label: "Hyprland" },
+                      { value: "Nyxiri", label: "Nyxiri" },
+                      { value: "Omarchy", label: "Omarchy" }
+                    ]
 
-                  delegate: Button {
-                    required property var modelData
-                    width: (parent.width - parent.spacing * 3) / 4
-                    text: modelData.label
-                    selected: String(popup.menuSetting("wordmark", "Nyxiri")).toUpperCase() === modelData.value.toUpperCase()
-                    bordered: !selected
-                    foreground: popup.bar.foreground
-                    onClicked: popup.setMenu({ wordmark: modelData.value })
+                    delegate: Button {
+                      required property var modelData
+                      width: (parent.width - parent.spacing * 3) / 4
+                      text: modelData.label
+                      selected: String(popup.menuSetting("wordmark", "Nyxiri")).toUpperCase() === modelData.value.toUpperCase()
+                      bordered: !selected
+                      foreground: popup.bar.foreground
+                      onClicked: popup.setMenu({ wordmark: modelData.value })
+                    }
                   }
                 }
-              }
 
-              FocusField {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
-                width: body.width
-                settingText: popup.menuSetting("wordmark", "Nyxiri")
-                placeholderText: "Nyxiri"
-                foreground: popup.bar.foreground
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.body
-                onCommit: function(value) { popup.setMenu({ wordmark: value }) }
-              }
+                FocusField {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
+                  width: body.width
+                  settingText: popup.menuSetting("wordmark", "Nyxiri")
+                  placeholderText: "Nyxiri"
+                  foreground: popup.bar.foreground
+                  font.family: popup.bar.fontFamily
+                  font.pixelSize: Style.font.body
+                  onCommit: function(value) { popup.setMenu({ wordmark: value }) }
+                }
 
-              Toggle {
-                visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
-                width: body.width
-                label: "Tint image"
-                description: "Recolour the image with the bar foreground"
-                checked: popup.menuSetting("tint", true) === true
-                foreground: popup.bar.foreground
-                onClicked: popup.setMenu({ tint: !checked })
-              }
+                Toggle {
+                  visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "image"
+                  width: body.width
+                  label: "Tint image"
+                  description: "Recolour the image with the bar foreground"
+                  checked: popup.menuSetting("tint", true) === true
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setMenu({ tint: !checked })
+                }
 
-              Toggle {
-                visible: popup.bar.nyxiriMenuAvailable
-                width: body.width
-                label: "Hover opens submenus"
-                description: "Pins this trigger; the menu's own row sets the shared default"
-                checked: popup.menuSetting("hoverOpen", true) !== false
-                foreground: popup.bar.foreground
-                onClicked: popup.setMenu({ hoverOpen: !checked })
+                Toggle {
+                  visible: popup.bar.nyxiriMenuAvailable
+                  width: body.width
+                  label: "Hover opens submenus"
+                  description: "Pins this trigger; the menu's own row sets the shared default"
+                  checked: popup.menuSetting("hoverOpen", true) !== false
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setMenu({ hoverOpen: !checked })
+                }
               }
 
               // The weather fork's secondary location is a widget setting;

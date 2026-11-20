@@ -500,6 +500,41 @@ test("the Widgets tab is now the Plugins tab, with Active and Disabled sub-tabs"
   assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active · " \+ \(popup\.plugins\.length - popup\.activePlugins\) \+ " disabled"/)
 })
 
+test("the settings window hides tabs and sections for plugins that are not installed", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  // hasPlugin: installed and enabled, matched by id or pluginId through
+  // baseWidgetId (registry keys can carry a "#n" suffix). A disabled
+  // plugin counts as absent: its widget is not on the bar, so its
+  // settings are dead.
+  assert.match(settings, /function hasPlugin\(id\)/)
+  assert.match(settings, /Nyxiri\.baseWidgetId\(p\.id\) === wanted/)
+  assert.match(settings, /Nyxiri\.baseWidgetId\(p\.pluginId\) === wanted/)
+  assert.match(settings, /p\.enabled !== true/)
+  // The probe is only evidence once it has completed successfully. While
+  // it is loading, errored, or came back empty, nothing is hidden, so the
+  // Workspaces tab never flashes away on first open.
+  assert.match(settings, /readonly property bool probeSettled: !popup\.pluginsLoading && popup\.pluginProbeError === "" && popup\.plugins\.length > 0/)
+  assert.match(settings, /readonly property bool showWorkspacesTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)/)
+  assert.match(settings, /readonly property bool showMenuTrigger: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-menu"\)/)
+  // The sidebar model is conditional: Workspaces only when its plugin is
+  // there. Appearance, Monitors, and Plugins are always present.
+  assert.match(settings, /readonly property var sidebarTabs:/)
+  assert.match(settings, /model: popup\.sidebarTabs/)
+  assert.match(settings, /if \(showWorkspacesTab\) tabs\.push\(\{ value: "workspaces", label: "Workspaces" \}\)/)
+  // The Menu Trigger section is one wrapped unit, hidden when the menu
+  // plugin is not installed (and the probe has settled) or its trigger
+  // is not on the bar, with no gap and no leftover header.
+  assert.match(settings, /visible: popup\.showMenuTrigger && popup\.bar\.nyxiriMenuAvailable/)
+  assert.match(settings, /text: "MENU TRIGGER"/)
+  // A tab whose plugin is not installed (or got disabled while the window
+  // is open) falls back to Appearance, checked both when the tab changes
+  // and when the probe settles.
+  assert.match(settings, /function ensureVisibleTab\(\)/)
+  assert.match(settings, /if \(tab === "workspaces" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)\) tab = "appearance"/)
+  assert.match(settings, /ensureVisibleTab\(\)/)
+  assert.match(settings, /onProbeSettledChanged: ensureVisibleTab\(\)/)
+})
+
 test("the settings window has a sidebar, a bat header, and a masked body", () => {
   const settings = read("NyxiriSettingsWindow.qml")
   // Sidebar sections, one per tab.
