@@ -606,7 +606,7 @@ PanelWindow {
               text: "\udb82\udf5f"
               color: popup.bar.foreground
               font.family: popup.bar.fontFamily
-              font.pixelSize: Style.space(44)
+              font.pixelSize: Style.space(52)
               textFormat: Text.PlainText
             }
 

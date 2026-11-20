@@ -2658,7 +2658,7 @@ Item {
       text: "\udb82\udf5f"
       color: Commons.Color.accent
       font.family: root.fontFamily
-      font.pixelSize: Math.round(batSize * 0.6)
+      font.pixelSize: Math.round(batSize * 0.85)
       textFormat: Text.PlainText
     }
 
