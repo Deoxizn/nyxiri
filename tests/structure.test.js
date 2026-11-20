@@ -67,12 +67,34 @@ test("the bar background honors the surface opacity setting", () => {
 
 test("the pill opacity slider is the fill level itself, so 100% means solid", () => {
   const settings = read("NyxiriSettingsWindow.qml")
-  assert.match(settings, /BodyText \{ text: "Pill opacity"/)
+  // Label above the slider now, not crammed onto one row with it.
+  assert.match(settings, /label: "Pill opacity"/)
+  assert.match(settings, /component SliderRow: Column/)
   assert.doesNotMatch(settings, /pill\.opacity/)
   const bar = read("Bar.qml")
   assert.match(bar, /color: Util\.alpha\(pillColor, fillOpacity\)/)
   assert.match(bar, /Border\.flat\(Util\.alpha\(pillColor, borderOpacity\), borderWidth\)/)
   assert.doesNotMatch(bar, /masterOpacity/)
+})
+
+test("section headers are bigger with room under them, and sliders put the label above", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  // SectionLabel is title size now, not caption, with space under it.
+  assert.match(settings, /component SectionLabel: Text/)
+  assert.match(settings, /font\.pixelSize: Style\.font\.title/)
+  assert.match(settings, /bottomPadding: Style\.spacing\.md/)
+  // Sub-headers get the same treatment one step smaller.
+  assert.match(settings, /component SubLabel: Text/)
+  assert.match(settings, /font\.pixelSize: Style\.font\.body/)
+  // Sliders are a SliderRow: label on its own line, slider full width.
+  assert.match(settings, /component SliderRow: Column/)
+  assert.match(settings, /label: "Background"/)
+  assert.match(settings, /label: "Border"/)
+  assert.match(settings, /label: "Padding"/)
+  // Tab columns breathe instead of packing rows tight.
+  assert.match(settings, /visible: popup\.tab === "appearance"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
+  assert.match(settings, /visible: popup\.tab === "monitors"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
+  assert.match(settings, /visible: popup\.tab === "plugins"\n\s+width: parent\.width\n\s+spacing: Style\.spacing\.lg/)
 })
 
 test("the settings card forces keyboard focus into its text fields on click", () => {
@@ -162,7 +184,7 @@ test("the plugins tab shows a row for every plugin even when kinds are unknown",
   const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /rowShown/)
   assert.match(settings, /kindList\(modelData\)\.length === 0/)
-  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
+  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active · " \+ \(popup\.plugins\.length - popup\.activePlugins\) \+ " disabled"/)
 })
 
 test("the plugins tab sorts active plugins first, then disabled, each alphabetical", () => {
@@ -236,7 +258,7 @@ test("the settings card has a workspaces tab with a marker style picker", () => 
   // The icon size slider only shows for the Apps style, and writes back
   // through the workspaces settings.
   assert.match(settings, /visible: popup\.bar\.nyxiriWorkspacesAvailable && popup\.workspacesSetting\("style", "numbers"\) === "apps"/)
-  assert.match(settings, /text: "App icon size"/)
+  assert.match(settings, /label: "App icon size"/)
   assert.match(settings, /popup\.workspacesSetting\("iconSize", 16\)/)
   assert.match(settings, /popup\.setWorkspaces\(\{ iconSize: value \}\)/)
   assert.doesNotMatch(settings, /setWorkspaces\(\{ mode: value \}\)/)
@@ -441,7 +463,7 @@ test("the monitors tab shows the short app id, not the full plugin id", () => {
   assert.match(settings, /onClicked: popup\.toggleRule\(monitorCard\.monitorName, modelData\)/)
 })
 
-test("the Widgets tab is now the Plugins tab, grouped under Active and Disabled", () => {
+test("the Widgets tab is now the Plugins tab, with Active and Disabled sub-tabs", () => {
   const settings = read("NyxiriSettingsWindow.qml")
   // Tab renamed.
   assert.match(settings, /\{ value: "plugins", label: "Plugins" \}/)
@@ -450,18 +472,26 @@ test("the Widgets tab is now the Plugins tab, grouped under Active and Disabled"
   assert.doesNotMatch(settings, /popup\.tab === "widgets"/)
   // The tab validates the new value.
   assert.match(read("Bar.qml"), /\["appearance", "monitors", "plugins"\]/)
-  // Active / Disabled groups, each its own model from the sorted list.
+  // Active / Disabled are sub-tabs now, not stacked groups: each group is
+  // its own model from the sorted list, and only the picked one shows.
   assert.match(settings, /activePluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled === true \}\)/)
   assert.match(settings, /disabledPluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled !== true \}\)/)
-  assert.match(settings, /text: "ACTIVE"/)
-  assert.match(settings, /text: "DISABLED"/)
+  assert.match(settings, /property string pluginGroup: "active"/)
+  assert.match(settings, /selected: popup\.pluginGroup === "active"/)
+  assert.match(settings, /selected: popup\.pluginGroup === "disabled"/)
+  assert.match(settings, /onClicked: popup\.pluginGroup = "active"/)
+  assert.match(settings, /onClicked: popup\.pluginGroup = "disabled"/)
+  assert.match(settings, /model: popup\.activePluginList\n\s+visible: popup\.pluginGroup === "active"/)
+  assert.match(settings, /model: popup\.disabledPluginList\n\s+visible: popup\.pluginGroup === "disabled"/)
+  assert.doesNotMatch(settings, /text: "ACTIVE"/)
+  assert.doesNotMatch(settings, /text: "DISABLED"/)
   assert.match(settings, /model: popup\.activePluginList/)
   assert.match(settings, /model: popup\.disabledPluginList/)
   // One shared row component, not two copies of the delegate.
   assert.match(settings, /component PluginRow: Column/)
   assert.match(settings, /delegate: PluginRow \{\}/)
-  // The count line still sits above the groups.
-  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active"/)
+  // The count line sits above the sub-tabs, with the disabled total.
+  assert.match(settings, /plugins\.length \+ " plugins · " \+ popup\.activePlugins \+ " active · " \+ \(popup\.plugins\.length - popup\.activePlugins\) \+ " disabled"/)
 })
 
 test("the settings window has a sidebar, a bat header, and a masked body", () => {
@@ -491,4 +521,21 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
   assert.doesNotMatch(bar, /nyxiri-right-click/)
   assert.doesNotMatch(bar, /nyxiri-settings-card/)
   assert.doesNotMatch(bar, /acceptedButtons: Qt\.RightButton/)
+})
+
+test("the bat button fits inside the bar thickness and its pill follows the right section", () => {
+  const bar = read("Bar.qml")
+  // The bar is 26 tall horizontal (28 vertical); the old hardcoded 28
+  // drew a circle outlining outside the bar. The button sizes from the
+  // bar's own thickness on its surface instead.
+  assert.match(bar, /property int thickness: root\.barSize/)
+  assert.match(bar, /thickness: barWindow\.thickness/)
+  assert.match(bar, /thickness - root\.nyxiri\.pill\.inset \* 2/)
+  assert.doesNotMatch(bar, /implicitWidth: Style\.space\(28\)/)
+  assert.doesNotMatch(bar, /implicitHeight: Style\.space\(28\)/)
+  // The bat sits last in the right section, so its own pill follows the
+  // right section's mode, not the left's: with left mini and right island
+  // the old check drew the pill twice (own pill + island pill).
+  assert.match(bar, /nyxiriSectionMode\("right"\) !== "island"/)
+  assert.doesNotMatch(bar, /nyxiriSectionMode\("left"\) !== "island"/)
 })

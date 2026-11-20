@@ -74,6 +74,7 @@ PanelWindow {
   }
 
   property string tab: "appearance"
+  property string pluginGroup: "active"
   property var plugins: []
   property bool pluginsLoading: false
   property string lastAction: ""
@@ -330,13 +331,28 @@ PanelWindow {
   // PanelWindow's default property is data, so non-visual children are
   // fine here.
 
+  // Section headers: a full window, not a popup card, so they read as
+  // headers, not fine print, with room under them before the controls.
   component SectionLabel: Text {
     color: Qt.darker(popup.bar.foreground, 1.35)
     font.family: popup.bar.fontFamily
-    font.pixelSize: Style.font.caption
+    font.pixelSize: Style.font.title
     font.bold: true
     font.letterSpacing: 0.4
     textFormat: Text.PlainText
+    bottomPadding: Style.spacing.md
+  }
+
+  // Sub-headers under a section (Mode, Style, Icon mode, ...): one step
+  // smaller than a section header, still bigger than the old caption
+  // labels, with room under them too.
+  component SubLabel: Text {
+    color: Qt.darker(popup.bar.foreground, 1.4)
+    font.family: popup.bar.fontFamily
+    font.pixelSize: Style.font.body
+    font.bold: true
+    textFormat: Text.PlainText
+    bottomPadding: Style.spacing.sm
   }
 
   component BodyText: Text {
@@ -345,6 +361,56 @@ PanelWindow {
     font.pixelSize: Style.font.bodySmall
     textFormat: Text.PlainText
     verticalAlignment: Text.AlignVCenter
+  }
+
+  // A slider with its label on its own line above it. The old card crammed
+  // label + slider + value onto one row because it was small; this is a
+  // full window, so the label gets its own line and the slider gets the
+  // whole width. `value` is bound to the setting, `released` writes it back.
+  component SliderRow: Column {
+    id: sliderRow
+    required property string label
+    required property real value
+    required property real minimum
+    required property real maximum
+    required property real step
+    property bool integer: false
+    required property string valueText
+    signal released(real value)
+
+    // The instantiating tab column is full width, so this is too. (body
+    // is not in scope here: the component is declared on the window, and
+    // body lives inside the window body below it.)
+    width: parent.width
+    spacing: Style.spacing.xxs
+
+    BodyText {
+      text: sliderRow.label
+      width: parent.width
+    }
+
+    Row {
+      width: parent.width
+      spacing: Style.spacing.sm
+
+      PanelSlider {
+        width: parent.width - sliderValue.width - parent.spacing
+        bar: popup.bar
+        value: sliderRow.value
+        minimum: sliderRow.minimum
+        maximum: sliderRow.maximum
+        step: sliderRow.step
+        integer: sliderRow.integer
+        onReleased: function(value) { sliderRow.released(value) }
+      }
+
+      BodyText {
+        id: sliderValue
+        text: sliderRow.valueText
+        width: Style.space(40)
+        horizontalAlignment: Text.AlignRight
+      }
+    }
   }
 
   // Text input in a popup does not take keyboard focus on click by itself:
@@ -638,7 +704,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "appearance"
               width: parent.width
-              spacing: Style.spacing.sm
+              spacing: Style.spacing.lg
 
               SectionLabel { text: "SECTION PILLS" }
 
@@ -649,31 +715,37 @@ PanelWindow {
                   { value: "right", label: "Right" }
                 ]
 
-                delegate: Row {
+                delegate: Column {
                   id: sectionRow
                   required property var modelData
                   width: body.width
-                  spacing: Style.spacing.xs
+                  spacing: Style.spacing.xxs
 
                   BodyText {
-                    text: modelData.label
-                    width: Style.space(72)
+                    text: sectionRow.modelData.label
+                    width: parent.width
                   }
 
-                  Repeater {
-                    model: [
-                      { value: "island", label: "Island", hint: "One pill around the whole section" },
-                      { value: "mini", label: "Mini", hint: "One pill per widget" }
-                    ]
+                  Row {
+                    width: parent.width
+                    spacing: Style.spacing.xs
 
-                    delegate: Button {
-                      required property var modelData
-                      text: modelData.label
-                      tooltipText: modelData.hint
-                      selected: popup.bar.nyxiriSectionMode(sectionRow.modelData.value) === modelData.value
-                      bordered: !selected
-                      foreground: popup.bar.foreground
-                      onClicked: popup.setSection(sectionRow.modelData.value, modelData.value)
+                    Repeater {
+                      model: [
+                        { value: "island", label: "Island", hint: "One pill around the whole section" },
+                        { value: "mini", label: "Mini", hint: "One pill per widget" }
+                      ]
+
+                      delegate: Button {
+                        required property var modelData
+                        width: (parent.width - parent.spacing) / 2
+                        text: modelData.label
+                        tooltipText: modelData.hint
+                        selected: popup.bar.nyxiriSectionMode(sectionRow.modelData.value) === modelData.value
+                        bordered: !selected
+                        foreground: popup.bar.foreground
+                        onClicked: popup.setSection(sectionRow.modelData.value, modelData.value)
+                      }
                     }
                   }
                 }
@@ -681,13 +753,18 @@ PanelWindow {
 
               SectionLabel { text: "COLOUR" }
 
-              Row {
+              // The swatch is the same height as the dropdown's field and
+              // bottom-anchored to it, so it reads as part of the field
+              // row instead of floating beside the label above it.
+              Item {
                 width: body.width
-                spacing: Style.spacing.sm
+                height: colorDropdown.height
 
                 Dropdown {
                   id: colorDropdown
-                  width: parent.width - swatch.width - parent.spacing
+                  width: parent.width - swatch.width - Style.spacing.sm
+                  anchors.left: parent.left
+                  anchors.top: parent.top
                   label: "Role"
                   value: popup.pill.color
                   options: popup.colorOptions
@@ -700,6 +777,8 @@ PanelWindow {
                   id: swatch
                   width: Style.space(44)
                   height: Style.spacing.controlHeight
+                  anchors.right: parent.right
+                  anchors.bottom: parent.bottom
                   radius: Style.cornerRadius
                   color: popup.bar.nyxiriPillColor
                   borderSpec: Border.flat(popup.bar.foreground, 1)
@@ -734,26 +813,15 @@ PanelWindow {
                 onChanged: function(value) { popup.setPill({ surface: value }) }
               }
 
-              Row {
-                width: body.width
-                spacing: Style.spacing.sm
+              SliderRow {
+                label: "Background"
+                value: popup.pill.surfaceOpacity
+                minimum: 0
+                maximum: 1
+                step: 0.05
+                valueText: Math.round(popup.pill.surfaceOpacity * 100) + "%"
                 enabled: popup.pill.surface !== "clear"
-                BodyText { text: "Background"; width: Style.space(76) }
-                PanelSlider {
-                  width: parent.width - Style.space(76) - surfaceValue.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.pill.surfaceOpacity
-                  minimum: 0
-                  maximum: 1
-                  step: 0.05
-                  onReleased: function(value) { popup.setPill({ surfaceOpacity: value }) }
-                }
-                BodyText {
-                  id: surfaceValue
-                  text: Math.round(popup.pill.surfaceOpacity * 100) + "%"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+                onReleased: function(value) { popup.setPill({ surfaceOpacity: value }) }
               }
 
               SectionLabel { text: "SHAPE" }
@@ -761,91 +829,46 @@ PanelWindow {
               // "Pill opacity" is the Fill level itself, so 100% means a
               // solid pill. A separate master fade once multiplied it, which
               // is why 100% still looked see-through; the master is gone.
-              Row {
-                width: body.width
-                spacing: Style.spacing.sm
-                BodyText { text: "Pill opacity"; width: Style.space(76) }
-                PanelSlider {
-                  id: fillSlider
-                  width: parent.width - Style.space(76) - valueText.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.pill.fillOpacity
-                  minimum: 0
-                  maximum: 1
-                  step: 0.05
-                  onReleased: function(value) { popup.setPill({ fillOpacity: value }) }
-                }
-                BodyText {
-                  id: valueText
-                  text: Math.round(popup.pill.fillOpacity * 100) + "%"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+              SliderRow {
+                label: "Pill opacity"
+                value: popup.pill.fillOpacity
+                minimum: 0
+                maximum: 1
+                step: 0.05
+                valueText: Math.round(popup.pill.fillOpacity * 100) + "%"
+                onReleased: function(value) { popup.setPill({ fillOpacity: value }) }
               }
 
-              Row {
-                width: body.width
-                spacing: Style.spacing.sm
-                BodyText { text: "Border"; width: Style.space(76) }
-                PanelSlider {
-                  width: parent.width - Style.space(76) - borderValue.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.pill.borderOpacity
-                  minimum: 0
-                  maximum: 1
-                  step: 0.05
-                  onReleased: function(value) { popup.setPill({ borderOpacity: value }) }
-                }
-                BodyText {
-                  id: borderValue
-                  text: Math.round(popup.pill.borderOpacity * 100) + "%"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+              SliderRow {
+                label: "Border"
+                value: popup.pill.borderOpacity
+                minimum: 0
+                maximum: 1
+                step: 0.05
+                valueText: Math.round(popup.pill.borderOpacity * 100) + "%"
+                onReleased: function(value) { popup.setPill({ borderOpacity: value }) }
               }
 
-              Row {
-                width: body.width
-                spacing: Style.spacing.sm
-                BodyText { text: "Width"; width: Style.space(76) }
-                PanelSlider {
-                  width: parent.width - Style.space(76) - widthValue.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.pill.borderWidth
-                  minimum: 0
-                  maximum: 4
-                  step: 1
-                  integer: true
-                  onReleased: function(value) { popup.setPill({ borderWidth: value }) }
-                }
-                BodyText {
-                  id: widthValue
-                  text: String(popup.pill.borderWidth) + "px"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+              SliderRow {
+                label: "Width"
+                value: popup.pill.borderWidth
+                minimum: 0
+                maximum: 4
+                step: 1
+                integer: true
+                valueText: String(popup.pill.borderWidth) + "px"
+                onReleased: function(value) { popup.setPill({ borderWidth: value }) }
               }
 
-              Row {
-                width: body.width
-                spacing: Style.spacing.sm
-                BodyText { text: "Padding"; width: Style.space(76) }
-                PanelSlider {
-                  width: parent.width - Style.space(76) - paddingValue.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.pill.padding
-                  minimum: 0
-                  maximum: 24
-                  step: 1
-                  integer: true
-                  onReleased: function(value) { popup.setPill({ padding: value }) }
-                }
-                BodyText {
-                  id: paddingValue
-                  text: String(popup.pill.padding) + "px"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+              SliderRow {
+                label: "Padding"
+                value: popup.pill.padding
+                minimum: 0
+                maximum: 24
+                step: 1
+                integer: true
+                valueText: String(popup.pill.padding) + "px"
+                onReleased: function(value) { popup.setPill({ padding: value }) }
               }
 
               // The menu fork's trigger is a separate plugin; only offer these
@@ -860,13 +883,9 @@ PanelWindow {
               // clear the card's focus grab, so picking an option closed
               // the card. Choice rows have neither problem, same as Mode
               // and Style below.
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriMenuAvailable
                 text: "Icon mode"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               Row {
@@ -893,13 +912,9 @@ PanelWindow {
                 }
               }
 
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "glyph"
                 text: "Glyph"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               Row {
@@ -965,13 +980,9 @@ PanelWindow {
               // widget renders every wordmark uppercased with wide
               // letterspacing, Shibumi-preview style, so the presets are
               // canned strings, not image assets. Custom text still works.
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriMenuAvailable && popup.menuSetting("iconMode", "glyph") === "wordmark"
                 text: "Wordmark"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               Row {
@@ -1038,13 +1049,9 @@ PanelWindow {
                 text: "WEATHER"
               }
 
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriWeatherAvailable
                 text: "Secondary location"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               FocusField {
@@ -1075,20 +1082,16 @@ PanelWindow {
             Column {
               visible: popup.tab === "workspaces"
               width: parent.width
-              spacing: Style.spacing.sm
+              spacing: Style.spacing.lg
 
               SectionLabel { text: "WORKSPACES" }
 
               // Dropdown popups open below the trigger and are clipped by
               // this card's window, so on a short tab the last options fall
               // off the bottom edge. Choice rows have nothing to clip.
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriWorkspacesAvailable
                 text: "Mode"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               Row {
@@ -1128,13 +1131,9 @@ PanelWindow {
                 wrapMode: Text.WordWrap
               }
 
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriWorkspacesAvailable
                 text: "Style"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               // Eight styles no longer fit one row, so this one wraps: four
@@ -1204,13 +1203,9 @@ PanelWindow {
                 onClicked: popup.switchClassic(!checked)
               }
 
-              Text {
+              SubLabel {
                 visible: popup.bar.nyxiriWorkspacesAvailable && popup.classicMode
                 text: "Workspaces per monitor"
-                color: Qt.darker(popup.bar.foreground, 1.4)
-                font.family: popup.bar.fontFamily
-                font.pixelSize: Style.font.caption
-                font.bold: true
               }
 
               FocusField {
@@ -1226,27 +1221,16 @@ PanelWindow {
 
               // App icon size only matters for the Apps style, so the slider
               // only shows while that style is picked.
-              Row {
+              SliderRow {
                 visible: popup.bar.nyxiriWorkspacesAvailable && popup.workspacesSetting("style", "numbers") === "apps"
-                width: body.width
-                spacing: Style.spacing.sm
-                BodyText { text: "App icon size"; width: Style.space(76) }
-                PanelSlider {
-                  width: parent.width - Style.space(76) - iconSizeValue.width - parent.spacing * 2
-                  bar: popup.bar
-                  value: popup.workspacesSetting("iconSize", 16)
-                  minimum: 12
-                  maximum: 24
-                  step: 1
-                  integer: true
-                  onReleased: function(value) { popup.setWorkspaces({ iconSize: value }) }
-                }
-                BodyText {
-                  id: iconSizeValue
-                  text: String(popup.workspacesSetting("iconSize", 16)) + "px"
-                  width: Style.space(40)
-                  horizontalAlignment: Text.AlignRight
-                }
+                label: "App icon size"
+                value: popup.workspacesSetting("iconSize", 16)
+                minimum: 12
+                maximum: 24
+                step: 1
+                integer: true
+                valueText: String(popup.workspacesSetting("iconSize", 16)) + "px"
+                onReleased: function(value) { popup.setWorkspaces({ iconSize: value }) }
               }
 
               BodyText {
@@ -1262,7 +1246,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "monitors"
               width: parent.width
-              spacing: Style.spacing.sm
+              spacing: Style.spacing.lg
 
               SectionLabel { text: "MONITORS" }
 
@@ -1288,7 +1272,7 @@ PanelWindow {
                   readonly property var rule: popup.monitorRule(monitorName)
 
                   width: body.width
-                  spacing: Style.spacing.xs
+                  spacing: Style.spacing.sm
 
                   BorderSurface {
                     width: parent.width
@@ -1335,15 +1319,15 @@ PanelWindow {
                     }
                   }
 
-                  Row {
+                  Column {
                     width: parent.width
-                    spacing: Style.spacing.xs
+                    spacing: Style.spacing.xxs
                     visible: monitorCard.rule.enabled
 
-                    BodyText { text: "Widgets"; width: Style.space(72) }
+                    BodyText { text: "Widgets"; width: parent.width }
 
                     Dropdown {
-                      width: parent.width - Style.space(72) - parent.spacing
+                      width: parent.width
                       value: monitorCard.rule.widgets.mode
                       options: [
                         { value: "all", label: "All widgets" },
@@ -1385,7 +1369,7 @@ PanelWindow {
             Column {
               visible: popup.tab === "plugins"
               width: parent.width
-              spacing: Style.spacing.sm
+              spacing: Style.spacing.lg
 
               Row {
                 width: body.width
@@ -1420,17 +1404,54 @@ PanelWindow {
               BodyText {
                 visible: popup.plugins.length > 0
                 width: body.width
-                text: popup.plugins.length + " plugins · " + popup.activePlugins + " active"
+                text: popup.plugins.length + " plugins · " + popup.activePlugins + " active · " + (popup.plugins.length - popup.activePlugins) + " disabled"
                 color: Qt.darker(popup.bar.foreground, 1.45)
                 font.pixelSize: Style.font.caption
               }
 
-              // A space, then the active plugins under an Active heading,
-              // a space, then the disabled ones under Disabled. The row is
-              // one component used by both Repeaters, so a row change lands
-              // in both groups.
-              Item { width: 1; height: Style.spacing.sm; visible: popup.plugins.length > 0 }
+              // Active and Disabled are their own sub-tabs now, not one
+              // long scroll with both groups stacked: pick a group and
+              // only its rows show. Same choice-row buttons as Mode/Style.
+              Row {
+                width: body.width
+                spacing: Style.spacing.xs
+                visible: popup.plugins.length > 0
 
+                Button {
+                  text: "Active"
+                  selected: popup.pluginGroup === "active"
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.pluginGroup = "active"
+                }
+
+                Button {
+                  text: "Disabled"
+                  selected: popup.pluginGroup === "disabled"
+                  bordered: !selected
+                  foreground: popup.bar.foreground
+                  onClicked: popup.pluginGroup = "disabled"
+                }
+              }
+
+              BodyText {
+                visible: popup.plugins.length > 0 && popup.pluginGroup === "active" && popup.activePluginList.length === 0
+                width: body.width
+                text: "No active plugins."
+                color: Qt.darker(popup.bar.foreground, 1.45)
+                font.pixelSize: Style.font.caption
+              }
+
+              BodyText {
+                visible: popup.plugins.length > 0 && popup.pluginGroup === "disabled" && popup.disabledPluginList.length === 0
+                width: body.width
+                text: "No disabled plugins."
+                color: Qt.darker(popup.bar.foreground, 1.45)
+                font.pixelSize: Style.font.caption
+              }
+
+              // One row component used by both Repeaters, so a row change
+              // lands in both groups.
               component PluginRow: Column {
                 required property var modelData
                 readonly property bool listed: popup.inBar(modelData)
@@ -1514,27 +1535,15 @@ PanelWindow {
                 }
               }
 
-              SectionLabel {
-                text: "ACTIVE"
-                visible: popup.activePluginList.length > 0
-                width: body.width
-              }
-
               Repeater {
                 model: popup.activePluginList
+                visible: popup.pluginGroup === "active"
                 delegate: PluginRow {}
-              }
-
-              Item { width: 1; height: Style.spacing.sm; visible: popup.activePluginList.length > 0 && popup.disabledPluginList.length > 0 }
-
-              SectionLabel {
-                text: "DISABLED"
-                visible: popup.disabledPluginList.length > 0
-                width: body.width
               }
 
               Repeater {
                 model: popup.disabledPluginList
+                visible: popup.pluginGroup === "disabled"
                 delegate: PluginRow {}
               }
 

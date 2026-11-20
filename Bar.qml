@@ -2225,6 +2225,7 @@ Item {
         NyxiriBatButton {
           id: batButton
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
+          thickness: barWindow.thickness
           anchors.right: parent.right
           anchors.rightMargin: Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
@@ -2315,6 +2316,7 @@ Item {
         NyxiriBatButton {
           id: batButton
           screenName: String(barWindow.screen ? barWindow.screen.name : "")
+          thickness: barWindow.thickness
           anchors.bottom: parent.bottom
           anchors.bottomMargin: Style.space(8)
           anchors.horizontalCenter: parent.horizontalCenter
@@ -2623,15 +2625,24 @@ Item {
   // the settings window from the bar: right-click and the menu entry are
   // gone. It sits last in the right section, on every surface. In island
   // mode the section pill spans it; in mini mode it draws its own pill.
+  // The button sizes from the bar's own thickness (26 horizontal, 28
+  // vertical): the old hardcoded 28 was taller than the bar, so the pill
+  // drew a circle outlining outside the bar. Its own pill follows the
+  // right section's mode, not the left's: with left mini and right island
+  // it drew twice, once on its own and once inside the island pill.
   component NyxiriBatButton: Item {
     property string screenName: ""
+    // The bar's thickness on this surface (barSize, or more where a notch
+    // floor raises it), passed by the instantiation.
+    property int thickness: root.barSize
+    readonly property int batSize: Math.max(Style.space(16), thickness - root.nyxiri.pill.inset * 2)
 
-    implicitWidth: Style.space(28)
-    implicitHeight: Style.space(28)
+    implicitWidth: batSize
+    implicitHeight: batSize
 
     NyxiriPill {
       anchors.fill: parent
-      visible: root.nyxiriSectionMode("left") !== "island"
+      visible: root.nyxiriSectionMode("right") !== "island"
     }
 
     Text {
@@ -2640,7 +2651,7 @@ Item {
       text: "\udb82\udf5f"
       color: root.barForeground
       font.family: root.fontFamily
-      font.pixelSize: Style.space(16)
+      font.pixelSize: Math.round(batSize * 0.6)
       textFormat: Text.PlainText
     }
 
