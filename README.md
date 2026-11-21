@@ -208,28 +208,33 @@ omarchy-shell pizza.dirty.nyxiri openSettingsTab system
 
 The window is a Noctalia-style sidebar window (880x620, bat glyph and Nyxiri header on the left, Close at the bottom). Its tabs are:
 
-- **Appearance** — section modes, colour role, custom hex, fill/border
-  opacity, border width, island padding, bar surface and bar background
-  opacity, and the Menu Trigger section (icon mode, wordmark, hover opens
-  submenus).
+- **Bar** — section modes, colour role, custom hex, fill/border opacity,
+  border width, island padding, bar surface and bar background opacity,
+  and which monitor's bar shows the bat.
+- **Calendar** — the clock's calendars: add an iCal / .ics link or a local
+  .ics file, links hidden unless you tap the eye.
+- **Menu** — the Menu Trigger section (icon mode, wordmark, hover opens
+  submenus), for the Nyxiri menu widget.
 - **Monitors** — per-monitor bar toggle and widget rules.
-- **Workspaces** — mode, marker style, hide-empty, and the Classic
-  workspaces toggle with per-monitor ranges, for the Nyxiri workspaces
-  widget.
-- **System Updater** — refresh interval, automatic checks, always show,
-  and per-source toggles, for the arch-updates widget.
 - **Plugins** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
   the official `omarchy` CLI, so behaviour matches the menu. The list has
   Active and Disabled sub-tabs, each group alphabetical, and the header
   counts all three (`52 plugins · 18 active · 34 disabled`).
+- **System Updater** — refresh interval, automatic checks, always show,
+  and per-source toggles, for the arch-updates widget.
+- **Weather** — secondary location, a second city shown under the main
+  forecast.
+- **Workspaces** — mode, marker style, hide-empty, and the Classic
+  workspaces toggle with per-monitor ranges, for the Nyxiri workspaces
+  widget.
 
 The Bar tab's SETTINGS BUTTON section picks which monitor's bar shows the bat (`bar.nyxiri.batScope` in shell.json): All monitors, or one of the detected monitors; if that monitor is unplugged, the bat shows on every bar so settings stay reachable.
 
 The window only shows tabs and sections for plugins that are installed and enabled: Workspaces appears when the workspaces widget is installed, System Updater when the arch-updates widget is installed, and the Menu Trigger section when the menu plugin is installed. Install a plugin and its tab shows up; the window reads as one bundled shell, not a list of dead settings.
 
 A tab whose content is taller than the window shows a scrollbar on the right
-edge (Plugins, and Appearance or Monitors on a short screen); drag it or
+edge (Plugins, and Bar or Monitors on a short screen); drag it or
 scroll with the wheel.
 
 ## Menu integration
