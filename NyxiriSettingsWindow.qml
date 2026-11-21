@@ -818,16 +818,6 @@ PanelWindow {
             }
           }
 
-          Text {
-            text: "Bar, widgets, updates and calendars"
-            color: Qt.darker(popup.bar.foreground, 1.4)
-            font.family: popup.bar.fontFamily
-            font.pixelSize: Style.font.caption
-            textFormat: Text.PlainText
-            wrapMode: Text.WordWrap
-            width: parent.width
-          }
-
           Repeater {
             model: popup.sidebarTabs
 
