@@ -125,7 +125,7 @@ PanelWindow {
   readonly property bool showCalendarTab: !probeSettled || hasPlugin("pizza.dirty.clock")
 
   // The sidebar's sections, A-Z by label, with a plugin's tab only
-  // when it is installed (and the probe has settled). Bar, Monitors,
+  // when it is installed (and the probe has settled). Bar, Monitor Bars,
   // and Plugins are the bar itself and the plugin manager, so they
   // are always present.
   readonly property var sidebarTabs: {
@@ -134,7 +134,7 @@ PanelWindow {
     ]
     if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })
     if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })
-    tabs.push({ value: "monitors", label: "Monitors" })
+    tabs.push({ value: "monitors", label: "Monitor Bars" })
     tabs.push({ value: "plugins", label: "Plugins" })
     if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })
     if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })
@@ -1075,45 +1075,6 @@ PanelWindow {
                 valueText: String(popup.pill.padding) + "px"
                 onReleased: function(value) { popup.setPill({ padding: value }) }
               }
-
-              SectionLabel { text: "SETTINGS BUTTON" }
-
-              // The bat opens this window, so it has to live somewhere:
-              // picking a monitor hides it on every other bar. The buttons
-              // are built from the live screens, so the names are whatever
-              // this machine has connected. Same choice-row button pattern
-              // as SECTION PILLS above, not a Dropdown: the Dropdown would
-              // not expand on click here.
-              Column {
-                width: body.width
-                spacing: Style.spacing.xxs
-
-                BodyText {
-                  text: "Show the bat on"
-                  width: parent.width
-                }
-
-                Row {
-                  id: batScopeRow
-                  width: parent.width
-                  spacing: Style.spacing.xs
-
-                  Repeater {
-                    id: batScopeRepeater
-                    model: popup.batScopeOptions
-
-                    delegate: Button {
-                      required property var modelData
-                      width: (batScopeRow.width - batScopeRow.spacing * (batScopeRepeater.count - 1)) / batScopeRepeater.count
-                      text: modelData.label
-                      selected: popup.bar.nyxiri.batScope === modelData.value
-                      bordered: !selected
-                      foreground: popup.bar.foreground
-                      onClicked: popup.setBatScope(modelData.value)
-                    }
-                  }
-                }
-              }
             }
 
             // ----------------------------------------------------------- menu
@@ -1843,7 +1804,7 @@ PanelWindow {
               width: parent.width
               spacing: Style.space(16)
 
-              SectionLabel { text: "MONITORS" }
+              SectionLabel { text: "MONITOR BARS" }
 
               Text {
                 width: body.width
@@ -1954,6 +1915,45 @@ PanelWindow {
                         fontSize: Style.font.caption
                         onClicked: popup.toggleRule(monitorCard.monitorName, modelData)
                       }
+                    }
+                  }
+                }
+              }
+
+              SectionLabel { text: "SETTINGS BUTTON" }
+
+              // The bat opens this window, so it has to live somewhere:
+              // picking a monitor hides it on every other bar. The buttons
+              // are built from the live screens, so the names are whatever
+              // this machine has connected. Same choice-row button pattern
+              // as the Bar tab's SECTION PILLS, not a Dropdown: the
+              // Dropdown would not expand on click here.
+              Column {
+                width: body.width
+                spacing: Style.spacing.xxs
+
+                BodyText {
+                  text: "Show the bat on"
+                  width: parent.width
+                }
+
+                Row {
+                  id: batScopeRow
+                  width: parent.width
+                  spacing: Style.spacing.xs
+
+                  Repeater {
+                    id: batScopeRepeater
+                    model: popup.batScopeOptions
+
+                    delegate: Button {
+                      required property var modelData
+                      width: (batScopeRow.width - batScopeRow.spacing * (batScopeRepeater.count - 1)) / batScopeRepeater.count
+                      text: modelData.label
+                      selected: popup.bar.nyxiri.batScope === modelData.value
+                      bordered: !selected
+                      foreground: popup.bar.foreground
+                      onClicked: popup.setBatScope(modelData.value)
                     }
                   }
                 }
@@ -2159,7 +2159,7 @@ PanelWindow {
         }
 
         // A visible scrollbar for the one shared scroll area: the Plugins
-        // tab (and Appearance/Monitors on a short screen) overflows the
+        // tab (and Bar/Monitor Bars on a short screen) overflows the
         // 430px viewport, and a wheel-only scroll gives no hint there is
         // more. It shows only when the active tab actually overflows, so
         // it serves every tab without taking space on the ones that fit.

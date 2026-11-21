@@ -519,7 +519,7 @@ test("the settings window hides tabs and sections for plugins that are not insta
   assert.match(settings, /readonly property bool showWeatherTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.weather"\)/)
   assert.match(settings, /readonly property bool showCalendarTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.clock"\)/)
   // The sidebar model is conditional: a plugin's tab only when it is
-  // there. Bar, Monitors, and Plugins are always present.
+  // there. Bar, Monitor Bars, and Plugins are always present.
   assert.match(settings, /readonly property var sidebarTabs:/)
   assert.match(settings, /model: popup\.sidebarTabs/)
   assert.match(settings, /if \(showWorkspacesTab\) tabs\.push\(\{ value: "workspaces", label: "Workspaces" \}\)/)
@@ -661,15 +661,15 @@ test("the settings window splits Appearance into Bar, Menu, and Weather", () => 
   assert.match(settings, /if \(tab === "menu" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-menu"\)\) tab = "bar"/)
   assert.match(settings, /if \(tab === "weather" && probeSettled && !hasPlugin\("pizza\.dirty\.weather"\)\) tab = "bar"/)
   // Sidebar order is A-Z by label: bar, calendar-if-shown,
-  // menu-if-shown, monitors.
+  // menu-if-shown, monitor bars.
   assert.ok(
     settings.indexOf('{ value: "bar", label: "Bar" }')
       < settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })')
       && settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })')
       < settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
       && settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
-      < settings.indexOf('tabs.push({ value: "monitors", label: "Monitors" })'),
-    "bar, calendar, menu, monitors order in sidebarTabs"
+      < settings.indexOf('tabs.push({ value: "monitors", label: "Monitor Bars" })'),
+    "bar, calendar, menu, monitor bars order in sidebarTabs"
   )
 })
 
@@ -678,12 +678,12 @@ test("the sidebar tabs render in A-Z order by label", () => {
   // A-Z by label, gating intact: a plugin's tab only when installed,
   // and the visible subset stays in A-Z order because the model is
   // built in A-Z order. The full order: Bar, Calendar, Menu,
-  // Monitors, Plugins, System Updater, Weather, Workspaces.
+  // Monitor Bars, Plugins, System Updater, Weather, Workspaces.
   const entries = [
     '{ value: "bar", label: "Bar" }',
     'if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })',
     'if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })',
-    'tabs.push({ value: "monitors", label: "Monitors" })',
+    'tabs.push({ value: "monitors", label: "Monitor Bars" })',
     'tabs.push({ value: "plugins", label: "Plugins" })',
     'if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })',
     'if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })',
@@ -791,9 +791,19 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
   assert.doesNotMatch(bar, /acceptedButtons: Qt\.RightButton/)
 })
 
-test("the Bar tab has a bat scope setting that writes through writeNyxiri", () => {
+test("the Monitor Bars tab has a bat scope setting that writes through writeNyxiri", () => {
   const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /SectionLabel \{ text: "SETTINGS BUTTON" \}/)
+  // It lives in the Monitor Bars tab now, at the bottom after the
+  // per-monitor bar/widget sections, not in the Bar tab: the bat is a
+  // per-monitor setting, so it belongs with the per-monitor bar rules.
+  assert.ok(
+    settings.indexOf('visible: popup.tab === "monitors"')
+      < settings.indexOf('SectionLabel { text: "SETTINGS BUTTON" }')
+      && settings.indexOf('SectionLabel { text: "SETTINGS BUTTON" }')
+      < settings.indexOf('// --------------------------------------------------------- plugins'),
+    "SETTINGS BUTTON sits inside the monitors tab column"
+  )
   // Buttons, not a Dropdown: the Dropdown would not expand on click here.
   // One button per live screen plus "All monitors"; the names come from
   // the connected screens, never hard-coded, so there is no "main" option
