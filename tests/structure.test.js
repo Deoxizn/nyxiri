@@ -550,15 +550,16 @@ test("the settings window has a System tab for the Arch Updates widget", () => {
   // Gating mirrors Workspaces: shown while the probe has not settled, and
   // once settled only when pizza.dirty.arch-updates is installed and enabled.
   assert.match(settings, /readonly property bool showSystemTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.arch-updates"\)/)
-  // Sidebar order: bar, menu-if-shown, weather-if-shown, monitors,
-  // workspaces-if-shown, system-if-shown, calendar-if-shown, plugins.
+  // Sidebar order is A-Z by label: bar, calendar-if-shown,
+  // menu-if-shown, monitors, plugins, system-if-shown,
+  // weather-if-shown, workspaces-if-shown.
   assert.match(settings, /if \(showSystemTab\) tabs\.push\(\{ value: "system", label: "System Updater" \}\)/)
   assert.ok(
-    settings.indexOf('if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })')
+    settings.indexOf('tabs.push({ value: "plugins", label: "Plugins" })')
       < settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
       && settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
-      < settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })'),
-    "system sits between workspaces and calendar in sidebarTabs"
+      < settings.indexOf('if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })'),
+    "system sits between plugins and weather in sidebarTabs"
   )
   // A hidden System tab falls back to Bar, like Workspaces.
   assert.match(settings, /function ensureVisibleTab\(\)/)
@@ -659,16 +660,45 @@ test("the settings window splits Appearance into Bar, Menu, and Weather", () => 
   // A hidden Menu or Weather tab falls back to Bar.
   assert.match(settings, /if \(tab === "menu" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-menu"\)\) tab = "bar"/)
   assert.match(settings, /if \(tab === "weather" && probeSettled && !hasPlugin\("pizza\.dirty\.weather"\)\) tab = "bar"/)
-  // Sidebar order: bar, menu-if-shown, weather-if-shown, monitors.
+  // Sidebar order is A-Z by label: bar, calendar-if-shown,
+  // menu-if-shown, monitors.
   assert.ok(
     settings.indexOf('{ value: "bar", label: "Bar" }')
+      < settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })')
+      && settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })')
       < settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
       && settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
-      < settings.indexOf('if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })')
-      && settings.indexOf('if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })')
       < settings.indexOf('tabs.push({ value: "monitors", label: "Monitors" })'),
-    "bar, menu, weather, monitors order in sidebarTabs"
+    "bar, calendar, menu, monitors order in sidebarTabs"
   )
+})
+
+test("the sidebar tabs render in A-Z order by label", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  // A-Z by label, gating intact: a plugin's tab only when installed,
+  // and the visible subset stays in A-Z order because the model is
+  // built in A-Z order. The full order: Bar, Calendar, Menu,
+  // Monitors, Plugins, System Updater, Weather, Workspaces.
+  const entries = [
+    '{ value: "bar", label: "Bar" }',
+    'if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })',
+    'if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })',
+    'tabs.push({ value: "monitors", label: "Monitors" })',
+    'tabs.push({ value: "plugins", label: "Plugins" })',
+    'if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })',
+    'if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })',
+    'if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })',
+  ]
+  let prev = -1
+  for (const entry of entries) {
+    const at = settings.indexOf(entry)
+    assert.ok(at > prev, entry + " comes after the previous sidebar tab in A-Z order")
+    prev = at
+  }
+  // The gating is unchanged: each conditional tab still only pushes
+  // when its plugin is installed and the probe has settled.
+  assert.match(settings, /readonly property bool showCalendarTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.clock"\)/)
+  assert.match(settings, /readonly property bool showSystemTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.arch-updates"\)/)
 })
 
 test("the settings window has a Calendar tab for the clock's calendars", () => {

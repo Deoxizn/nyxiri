@@ -112,21 +112,21 @@ PanelWindow {
   readonly property bool showSystemTab: !probeSettled || hasPlugin("pizza.dirty.arch-updates")
   readonly property bool showCalendarTab: !probeSettled || hasPlugin("pizza.dirty.clock")
 
-  // The sidebar's sections, with a plugin's tab only when it is
-  // installed (and the probe has settled). Bar, Monitors, and Plugins
-  // are the bar itself and the plugin manager, so they are always
-  // present.
+  // The sidebar's sections, A-Z by label, with a plugin's tab only
+  // when it is installed (and the probe has settled). Bar, Monitors,
+  // and Plugins are the bar itself and the plugin manager, so they
+  // are always present.
   readonly property var sidebarTabs: {
     var tabs = [
       { value: "bar", label: "Bar" }
     ]
-    if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })
-    if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })
-    tabs.push({ value: "monitors", label: "Monitors" })
-    if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
-    if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })
     if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })
+    if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })
+    tabs.push({ value: "monitors", label: "Monitors" })
     tabs.push({ value: "plugins", label: "Plugins" })
+    if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })
+    if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })
+    if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
     return tabs
   }
 
