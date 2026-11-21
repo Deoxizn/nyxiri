@@ -21,7 +21,7 @@ PanelWindow {
   // does not). screenName identifies the surface the window was opened for.
   property var bar: null
   property string screenName: ""
-  property string initialTab: "appearance"
+  property string initialTab: "bar"
 
   // A real layer-shell surface, not a popup: it takes keyboard focus
   // natively, so the wordmark and ranges fields just work. Floating: it
@@ -73,7 +73,7 @@ PanelWindow {
     return out
   }
 
-  property string tab: "appearance"
+  property string tab: "bar"
   property string pluginGroup: "active"
   property var plugins: []
   property bool pluginsLoading: false
@@ -103,34 +103,44 @@ PanelWindow {
   }
 
   // Tabs and sections for plugins that may not be installed. While the
-  // probe has not settled, everything shows (the current behavior), so the
-  // Workspaces tab never flashes away on first open even when its plugin
-  // is installed. Once settled, a missing plugin's tab or section goes.
+  // probe has not settled, everything shows (the current behavior), so a
+  // tab never flashes away on first open even when its plugin is
+  // installed. Once settled, a missing plugin's tab goes.
   readonly property bool showWorkspacesTab: !probeSettled || hasPlugin("pizza.dirty.nyxiri-workspaces")
-  readonly property bool showMenuTrigger: !probeSettled || hasPlugin("pizza.dirty.nyxiri-menu")
+  readonly property bool showMenuTab: !probeSettled || hasPlugin("pizza.dirty.nyxiri-menu")
+  readonly property bool showWeatherTab: !probeSettled || hasPlugin("pizza.dirty.weather")
   readonly property bool showSystemTab: !probeSettled || hasPlugin("pizza.dirty.arch-updates")
+  readonly property bool showCalendarTab: !probeSettled || hasPlugin("pizza.dirty.clock")
 
-  // The sidebar's sections, with Workspaces only when its plugin is
-  // installed (and the probe has settled). Appearance, Monitors, and
-  // Plugins are the bar itself and the plugin manager, so they are
-  // always present.
+  // The sidebar's sections, with a plugin's tab only when it is
+  // installed (and the probe has settled). Bar, Monitors, and Plugins
+  // are the bar itself and the plugin manager, so they are always
+  // present.
   readonly property var sidebarTabs: {
     var tabs = [
-      { value: "appearance", label: "Appearance" },
-      { value: "monitors", label: "Monitors" }
+      { value: "bar", label: "Bar" }
     ]
+    if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })
+    if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })
+    tabs.push({ value: "monitors", label: "Monitors" })
     if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
     if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })
+    if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })
     tabs.push({ value: "plugins", label: "Plugins" })
     return tabs
   }
 
   // If the current tab is one whose plugin is not installed (or got
-  // disabled while the window is open), fall back to Appearance so the
-  // window never shows a hidden tab's content with no way back.
+  // disabled while the window is open), fall back to Bar so the window
+  // never shows a hidden tab's content with no way back. "appearance"
+  // is the old Bar tab id, kept as an alias that lands on Bar.
   function ensureVisibleTab() {
-    if (tab === "workspaces" && probeSettled && !hasPlugin("pizza.dirty.nyxiri-workspaces")) tab = "appearance"
-    if (tab === "system" && probeSettled && !hasPlugin("pizza.dirty.arch-updates")) tab = "appearance"
+    if (tab === "appearance") tab = "bar"
+    if (tab === "workspaces" && probeSettled && !hasPlugin("pizza.dirty.nyxiri-workspaces")) tab = "bar"
+    if (tab === "menu" && probeSettled && !hasPlugin("pizza.dirty.nyxiri-menu")) tab = "bar"
+    if (tab === "weather" && probeSettled && !hasPlugin("pizza.dirty.weather")) tab = "bar"
+    if (tab === "system" && probeSettled && !hasPlugin("pizza.dirty.arch-updates")) tab = "bar"
+    if (tab === "calendar" && probeSettled && !hasPlugin("pizza.dirty.clock")) tab = "bar"
   }
 
   // Active plugins first, then disabled, each group alphabetical by name.
@@ -228,6 +238,87 @@ PanelWindow {
 
   function setSystem(patch) {
     popup.bar.writeSystemSettings(patch)
+  }
+
+  // ---------------------------------------------------------------- calendar
+
+  // The clock plugin's calendars live in a plain file, not a widget
+  // setting: ~/.config/pizza.dirty.clock/calendars.json, a list of
+  // {account, name, url|path, color, enabled}. A remote feed has `url`
+  // (an iCal/.ics link, https:// or webcal:// — the fetcher refuses
+  // plain http); a local file has `path` (a .ics file, ~ expands).
+  // The clock widget watches this file and refetches when it changes,
+  // so writing it is the whole refresh mechanism. The file is 0600:
+  // the links are secret, so the tab masks them like a password field
+  // and only reveals one when its eye toggle is tapped.
+  readonly property string calendarsPath: (Quickshell.env("HOME") || "") + "/.config/pizza.dirty.clock/calendars.json"
+  readonly property string calendarsScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/pizza.dirty.nyxiri/scripts/write-calendars.py"
+  property var calendars: []
+  property var calendarsBeforeSave: []
+  property string calendarsStatus: ""
+  property string calendarsWriteOutput: ""
+  property bool newCalShowLink: false
+
+  function loadCalendars() {
+    try {
+      var parsed = JSON.parse(String(calendarsFile.text() || "[]"))
+      popup.calendars = Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      popup.calendars = []
+    }
+  }
+
+  // The list is one argv to the helper (never a shell string, so secret
+  // URLs pass through untouched). The helper validates, writes atomically
+  // at 0600, and prints {"status": "ok"} or {"status": "error", ...};
+  // its errors never echo a value back, so a link cannot leak into the
+  // status line. The list is updated optimistically and restored if the
+  // write fails, so the tab never shows a calendar that is not on disk.
+  function saveCalendars(list) {
+    popup.calendarsBeforeSave = popup.calendars
+    popup.calendars = list
+    popup.calendarsStatus = ""
+    calendarsWrite.command = ["python3", popup.calendarsScript, "--file", popup.calendarsPath, JSON.stringify(list)]
+    calendarsWrite.running = true
+  }
+
+  function addCalendar() {
+    var name = String(newNameField.text || "").trim()
+    var link = String(newLinkField.text || "").trim()
+    var account = String(newAccountField.text || "").trim() || "Personal"
+    if (name === "") { popup.calendarsStatus = "Give the calendar a name."; return }
+    if (link === "") { popup.calendarsStatus = "Paste a link or a local file path."; return }
+    var entry = { account: account, name: name, color: "#4285f4", enabled: true }
+    if (link.indexOf("http://") === 0) {
+      popup.calendarsStatus = "Use https:// — the clock refuses plain http links."
+      return
+    }
+    if (link.indexOf("https://") === 0 || link.indexOf("webcal://") === 0) entry.url = link
+    else entry.path = link
+    var list = popup.calendars.slice()
+    list.push(entry)
+    popup.saveCalendars(list)
+    newNameField.text = ""
+    newAccountField.text = ""
+    newLinkField.text = ""
+    popup.newCalShowLink = false
+  }
+
+  function removeCalendar(index) {
+    var list = popup.calendars.slice()
+    if (index < 0 || index >= list.length) return
+    list.splice(index, 1)
+    popup.saveCalendars(list)
+  }
+
+  function setCalendarEnabled(index, enabled) {
+    var list = popup.calendars.slice()
+    if (index < 0 || index >= list.length) return
+    var entry = {}
+    for (var k in list[index]) entry[k] = list[index][k]
+    entry.enabled = enabled
+    list[index] = entry
+    popup.saveCalendars(list)
   }
 
   // ---------------------------------------------------------------- classic
@@ -373,6 +464,7 @@ PanelWindow {
       tab = initialTab
       refreshPlugins()
       refreshClassicMode()
+      calendarsFile.reload()
     }
   }
   onInitialTabChanged: if (visible) tab = initialTab
@@ -380,6 +472,7 @@ PanelWindow {
     if (tab === "plugins" && plugins.length === 0 && !pluginsLoading) refreshPlugins()
     ensureVisibleTab()
     if (tab === "workspaces") refreshClassicMode()
+    if (tab === "calendar") calendarsFile.reload()
   }
   // When the probe settles, a tab whose plugin turned out not to be
   // installed (or got disabled while the window is open) is hidden, so
@@ -636,6 +729,43 @@ PanelWindow {
     }
   }
 
+  // The clock's calendars file, watched so the tab follows edits made
+  // elsewhere (and the clock widget refetches on the same change). The
+  // file may not exist yet on a fresh install — the tab then shows an
+  // empty list and the first add creates it.
+  FileView {
+    id: calendarsFile
+    path: popup.calendarsPath
+    watchChanges: true
+    printErrors: false
+    onLoaded: popup.loadCalendars()
+    onLoadFailed: popup.calendars = []
+    onFileChanged: popup.loadCalendars()
+  }
+
+  Process {
+    id: calendarsWrite
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: popup.calendarsWriteOutput = String(text || "")
+    }
+    stderr: StdioCollector { waitForEnd: true }
+    onExited: function(exitCode) {
+      var msg = ""
+      try {
+        var parsed = JSON.parse(popup.calendarsWriteOutput || "{}")
+        msg = String(parsed.error || "")
+      } catch (e) {}
+      if (exitCode !== 0) {
+        popup.calendars = popup.calendarsBeforeSave
+        popup.calendarsStatus = msg !== "" ? msg : "Could not save calendars"
+      } else {
+        popup.calendarsStatus = "Saved."
+        calendarsFile.reload()
+      }
+    }
+  }
+
 // The window body: a fixed-size surface centered on its screen. The
 // PanelWindow itself spans the screen (transparent) and the mask limits
 // input to this body, so clicks outside it pass through.
@@ -689,7 +819,7 @@ PanelWindow {
           }
 
           Text {
-            text: "Bar appearance, monitor rules and widgets"
+            text: "Bar, widgets, updates and calendars"
             color: Qt.darker(popup.bar.foreground, 1.4)
             font.family: popup.bar.fontFamily
             font.pixelSize: Style.font.caption
@@ -767,11 +897,13 @@ PanelWindow {
             width: scrollArea.width
             spacing: Style.spacing.lg
 
-            // ------------------------------------------------------ appearance
+            // ------------------------------------------------------------ bar
             Column {
-              visible: popup.tab === "appearance"
+              visible: popup.tab === "bar"
               width: parent.width
               spacing: Style.space(16)
+
+              SectionLabel { text: "BAR" }
 
               SectionLabel { text: "SECTION PILLS" }
 
@@ -937,23 +1069,22 @@ PanelWindow {
                 valueText: String(popup.pill.padding) + "px"
                 onReleased: function(value) { popup.setPill({ padding: value }) }
               }
+            }
 
-              // The menu trigger's settings belong to a separate plugin
-              // (pizza.dirty.nyxiri-menu). The whole section is one unit:
-              // it shows only when the menu plugin is installed and its
-              // trigger is on the bar, and hides without a gap or a
-              // leftover header when it is not.
-              Column {
-                visible: popup.showMenuTrigger && popup.bar.nyxiriMenuAvailable
-                width: parent.width
-                spacing: Style.space(16)
+            // ----------------------------------------------------------- menu
+            // The menu trigger's settings belong to a separate plugin
+            // (pizza.dirty.nyxiri-menu). The tab only shows when that
+            // plugin is installed; the controls only show when its
+            // trigger is actually on the bar.
+            Column {
+              visible: popup.tab === "menu"
+              width: parent.width
+              spacing: Style.space(16)
 
-                // The menu fork's trigger is a separate plugin; only offer these
-                // controls when it is installed and actually on the bar.
-                SectionLabel {
-                  visible: popup.bar.nyxiriMenuAvailable
-                  text: "MENU TRIGGER"
-                }
+              SectionLabel {
+                visible: popup.bar.nyxiriMenuAvailable
+                text: "MENU TRIGGER"
+              }
 
                 // Dropdown popups are clipped by this card's window, so the
                 // last option falls off the bottom edge, and their clicks
@@ -1117,11 +1248,25 @@ PanelWindow {
                   foreground: popup.bar.foreground
                   onClicked: popup.setMenu({ hoverOpen: !checked })
                 }
+
+                BodyText {
+                  visible: !popup.bar.nyxiriMenuAvailable
+                  width: body.width
+                  text: "Add the Menu widget to the bar to change these."
+                  color: Qt.darker(popup.bar.foreground, 1.35)
+                  font.pixelSize: Style.font.caption
+                }
               }
 
-              // The weather fork's secondary location is a widget setting;
-              // only offer it when pizza.dirty.weather is actually on the bar.
-              // A name ("Tucson") or "lat,lon". Empty means no secondary.
+            // -------------------------------------------------------- weather
+            // The weather fork's secondary location is a widget setting;
+            // only offer it when pizza.dirty.weather is actually on the bar.
+            // A name ("Tucson") or "lat,lon". Empty means no secondary.
+            Column {
+              visible: popup.tab === "weather"
+              width: parent.width
+              spacing: Style.space(16)
+
               SectionLabel {
                 visible: popup.bar.nyxiriWeatherAvailable
                 text: "WEATHER"
@@ -1151,6 +1296,14 @@ PanelWindow {
                 font.family: popup.bar.fontFamily
                 font.pixelSize: Style.font.caption
                 wrapMode: Text.WordWrap
+              }
+
+              BodyText {
+                visible: !popup.bar.nyxiriWeatherAvailable
+                width: body.width
+                text: "Add the Weather widget to the bar to change these."
+                color: Qt.darker(popup.bar.foreground, 1.35)
+                font.pixelSize: Style.font.caption
               }
             }
 
@@ -1420,6 +1573,222 @@ PanelWindow {
                 text: "Add the Arch Updates widget to the bar to change these."
                 color: Qt.darker(popup.bar.foreground, 1.35)
                 font.pixelSize: Style.font.caption
+              }
+            }
+
+            // ------------------------------------------------------- calendar
+            // The clock's calendars, from calendars.json. A remote feed
+            // is an iCal/.ics link (https:// or webcal://); a local feed
+            // is a .ics file path. Links are secrets, so each row masks
+            // its link like a password field until its eye toggle reveals
+            // it; a local path is not a secret and shows as-is. Writing
+            // the file is the refresh: the clock watches it and refetches.
+            Column {
+              visible: popup.tab === "calendar"
+              width: parent.width
+              spacing: Style.space(16)
+
+              SectionLabel { text: "CALENDAR" }
+
+              Text {
+                width: body.width
+                text: "The clock's calendars. Add an iCal / .ics link or a local .ics file — no need to edit calendars.json by hand."
+                color: Qt.darker(popup.bar.foreground, 1.45)
+                font.family: popup.bar.fontFamily
+                font.pixelSize: Style.font.caption
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+              }
+
+              BodyText {
+                visible: popup.calendars.length === 0
+                width: body.width
+                text: "No calendars yet. Add one below."
+                color: Qt.darker(popup.bar.foreground, 1.35)
+                font.pixelSize: Style.font.caption
+              }
+
+              Repeater {
+                model: popup.calendars
+
+                delegate: Column {
+                  id: calRow
+                  required property var modelData
+                  required property int index
+                  property bool showSecret: false
+                  width: body.width
+                  spacing: Style.spacing.xxs
+
+                  Row {
+                    width: parent.width
+                    spacing: Style.spacing.sm
+
+                    Rectangle {
+                      width: Style.space(12)
+                      height: Style.space(12)
+                      radius: Style.space(6)
+                      color: String(calRow.modelData.color || "#4285f4")
+                      anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    BodyText {
+                      text: String(calRow.modelData.name || "Calendar")
+                      font.bold: true
+                      width: parent.width - Style.space(12) - enabledSwitch.width - removeButton.width - parent.spacing * 3
+                      elide: Text.ElideRight
+                      anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    ToggleSwitch {
+                      id: enabledSwitch
+                      anchors.verticalCenter: parent.verticalCenter
+                      checked: calRow.modelData.enabled !== false
+                      foreground: popup.bar.foreground
+                      onToggled: popup.setCalendarEnabled(calRow.index, !(calRow.modelData.enabled !== false))
+                    }
+
+                    Button {
+                      id: removeButton
+                      anchors.verticalCenter: parent.verticalCenter
+                      text: "Remove"
+                      bordered: true
+                      foreground: popup.bar.foreground
+                      onClicked: popup.removeCalendar(calRow.index)
+                    }
+                  }
+
+                  Row {
+                    visible: calRow.modelData.url !== undefined && calRow.modelData.url !== null && String(calRow.modelData.url || "") !== ""
+                    width: parent.width
+                    spacing: Style.spacing.xs
+
+                    // Display only: a Text, not a field. The link shows
+                    // as bullets until this row's eye toggle reveals it.
+                    Text {
+                      width: parent.width - linkEye.width - parent.spacing
+                      text: calRow.showSecret ? String(calRow.modelData.url || "") : "••••••••••••"
+                      elide: Text.ElideRight
+                      color: popup.bar.foreground
+                      font.family: popup.bar.fontFamily
+                      font.pixelSize: Style.font.bodySmall
+                      textFormat: Text.PlainText
+                      verticalAlignment: Text.AlignVCenter
+                    }
+
+                    Item {
+                      id: linkEye
+                      width: Style.space(32)
+                      height: Style.space(28)
+                      anchors.verticalCenter: parent.verticalCenter
+
+                      Text {
+                        anchors.centerIn: parent
+                        // nf-md-eye / nf-md-eye-off, U+F0208 / U+F0209.
+                        text: calRow.showSecret ? "\udb80\ude09" : "\udb80\ude08"
+                        color: popup.bar.foreground
+                        font.family: popup.bar.fontFamily
+                        font.pixelSize: Style.font.body
+                        textFormat: Text.PlainText
+                      }
+
+                      MouseArea {
+                        anchors.fill: parent
+                        onClicked: calRow.showSecret = !calRow.showSecret
+                      }
+                    }
+                  }
+
+                  BodyText {
+                    visible: (calRow.modelData.url === undefined || calRow.modelData.url === null || String(calRow.modelData.url || "") === "") && calRow.modelData.path !== undefined && calRow.modelData.path !== null && String(calRow.modelData.path || "") !== ""
+                    width: parent.width
+                    text: String(calRow.modelData.path || "")
+                    elide: Text.ElideRight
+                    color: Qt.darker(popup.bar.foreground, 1.4)
+                    font.pixelSize: Style.font.caption
+                  }
+                }
+              }
+
+              SubLabel { text: "Add a calendar" }
+
+              FocusField {
+                id: newNameField
+                width: body.width
+                placeholderText: "Name"
+                foreground: popup.bar.foreground
+                font.family: popup.bar.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              FocusField {
+                id: newAccountField
+                width: body.width
+                placeholderText: "Account (optional, default Personal)"
+                foreground: popup.bar.foreground
+                font.family: popup.bar.fontFamily
+                font.pixelSize: Style.font.body
+              }
+
+              Row {
+                width: body.width
+                spacing: Style.spacing.xs
+
+                FocusField {
+                  id: newLinkField
+                  width: parent.width - newLinkEye.width - parent.spacing
+                  echoMode: popup.newCalShowLink ? TextInput.Normal : TextInput.Password
+                  placeholderText: "https://…/basic.ics or ~/path/to/file.ics"
+                  foreground: popup.bar.foreground
+                  font.family: popup.bar.fontFamily
+                  font.pixelSize: Style.font.body
+                }
+
+                Item {
+                  id: newLinkEye
+                  width: Style.space(32)
+                  height: newLinkField.height
+
+                  Text {
+                    anchors.centerIn: parent
+                    // nf-md-eye / nf-md-eye-off, U+F0208 / U+F0209.
+                    text: popup.newCalShowLink ? "\udb80\ude09" : "\udb80\ude08"
+                    color: popup.bar.foreground
+                    font.family: popup.bar.fontFamily
+                    font.pixelSize: Style.font.body
+                    textFormat: Text.PlainText
+                  }
+
+                  MouseArea {
+                    anchors.fill: parent
+                    onClicked: popup.newCalShowLink = !popup.newCalShowLink
+                  }
+                }
+              }
+
+              Text {
+                width: body.width
+                text: "An iCal / .ics link (https:// or webcal://) or a local .ics file path. Links stay hidden unless you tap the eye."
+                color: Qt.darker(popup.bar.foreground, 1.4)
+                font.family: popup.bar.fontFamily
+                font.pixelSize: Style.font.caption
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+              }
+
+              Button {
+                text: "Add calendar"
+                bordered: true
+                foreground: popup.bar.foreground
+                onClicked: popup.addCalendar()
+              }
+
+              BodyText {
+                visible: popup.calendarsStatus !== ""
+                width: body.width
+                text: popup.calendarsStatus
+                color: Qt.darker(popup.bar.foreground, 1.35)
+                font.pixelSize: Style.font.caption
+                wrapMode: Text.WordWrap
               }
             }
 

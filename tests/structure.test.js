@@ -95,7 +95,7 @@ test("section headers are bigger with room under them, and sliders put the label
   assert.match(settings, /label: "Padding"/)
   // Tab columns breathe instead of packing rows tight: double the old
   // lg spacing, so the gap between sections is twice what it was.
-  assert.match(settings, /visible: popup\.tab === "appearance"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "bar"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
   assert.match(settings, /visible: popup\.tab === "workspaces"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
   assert.match(settings, /visible: popup\.tab === "monitors"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
   assert.match(settings, /visible: popup\.tab === "plugins"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
@@ -475,7 +475,7 @@ test("the Widgets tab is now the Plugins tab, with Active and Disabled sub-tabs"
   assert.match(settings, /visible: popup\.tab === "plugins"/)
   assert.doesNotMatch(settings, /popup\.tab === "widgets"/)
   // The tab validates the new value.
-  assert.match(read("Bar.qml"), /\["appearance", "monitors", "plugins", "system"\]/)
+  assert.match(read("Bar.qml"), /\["bar", "menu", "weather", "monitors", "workspaces", "system", "calendar", "plugins"\]/)
   // Active / Disabled are sub-tabs now, not stacked groups: each group is
   // its own model from the sorted list, and only the picked one shows.
   assert.match(settings, /activePluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled === true \}\)/)
@@ -515,22 +515,31 @@ test("the settings window hides tabs and sections for plugins that are not insta
   // Workspaces tab never flashes away on first open.
   assert.match(settings, /readonly property bool probeSettled: !popup\.pluginsLoading && popup\.pluginProbeError === "" && popup\.plugins\.length > 0/)
   assert.match(settings, /readonly property bool showWorkspacesTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)/)
-  assert.match(settings, /readonly property bool showMenuTrigger: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-menu"\)/)
-  // The sidebar model is conditional: Workspaces only when its plugin is
-  // there. Appearance, Monitors, and Plugins are always present.
+  assert.match(settings, /readonly property bool showMenuTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-menu"\)/)
+  assert.match(settings, /readonly property bool showWeatherTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.weather"\)/)
+  assert.match(settings, /readonly property bool showCalendarTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.clock"\)/)
+  // The sidebar model is conditional: a plugin's tab only when it is
+  // there. Bar, Monitors, and Plugins are always present.
   assert.match(settings, /readonly property var sidebarTabs:/)
   assert.match(settings, /model: popup\.sidebarTabs/)
   assert.match(settings, /if \(showWorkspacesTab\) tabs\.push\(\{ value: "workspaces", label: "Workspaces" \}\)/)
-  // The Menu Trigger section is one wrapped unit, hidden when the menu
-  // plugin is not installed (and the probe has settled) or its trigger
-  // is not on the bar, with no gap and no leftover header.
-  assert.match(settings, /visible: popup\.showMenuTrigger && popup\.bar\.nyxiriMenuAvailable/)
+  assert.match(settings, /if \(showMenuTab\) tabs\.push\(\{ value: "menu", label: "Menu" \}\)/)
+  assert.match(settings, /if \(showWeatherTab\) tabs\.push\(\{ value: "weather", label: "Weather" \}\)/)
+  assert.match(settings, /if \(showCalendarTab\) tabs\.push\(\{ value: "calendar", label: "Calendar" \}\)/)
+  // The Menu Trigger section is now its own tab: the column shows when
+  // the menu plugin is installed, and the controls inside only when its
+  // trigger is on the bar, with a not-on-the-bar line instead of a gap.
+  assert.match(settings, /visible: popup\.tab === "menu"/)
   assert.match(settings, /text: "MENU TRIGGER"/)
+  assert.match(settings, /text: "Add the Menu widget to the bar to change these\."/)
+  assert.doesNotMatch(settings, /showMenuTrigger/)
   // A tab whose plugin is not installed (or got disabled while the window
-  // is open) falls back to Appearance, checked both when the tab changes
-  // and when the probe settles.
+  // is open) falls back to Bar, checked both when the tab changes
+  // and when the probe settles. "appearance" is the old Bar tab id and
+  // still lands on Bar.
   assert.match(settings, /function ensureVisibleTab\(\)/)
-  assert.match(settings, /if \(tab === "workspaces" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)\) tab = "appearance"/)
+  assert.match(settings, /if \(tab === "workspaces" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)\) tab = "bar"/)
+  assert.match(settings, /if \(tab === "appearance"\) tab = "bar"/)
   assert.match(settings, /ensureVisibleTab\(\)/)
   assert.match(settings, /onProbeSettledChanged: ensureVisibleTab\(\)/)
 })
@@ -541,19 +550,19 @@ test("the settings window has a System tab for the Arch Updates widget", () => {
   // Gating mirrors Workspaces: shown while the probe has not settled, and
   // once settled only when pizza.dirty.arch-updates is installed and enabled.
   assert.match(settings, /readonly property bool showSystemTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.arch-updates"\)/)
-  // Sidebar order: appearance, monitors, workspaces-if-shown,
-  // system-if-shown, plugins.
+  // Sidebar order: bar, menu-if-shown, weather-if-shown, monitors,
+  // workspaces-if-shown, system-if-shown, calendar-if-shown, plugins.
   assert.match(settings, /if \(showSystemTab\) tabs\.push\(\{ value: "system", label: "System Updater" \}\)/)
   assert.ok(
     settings.indexOf('if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })')
       < settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
       && settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
-      < settings.indexOf('tabs.push({ value: "plugins", label: "Plugins" })'),
-    "system sits between workspaces and plugins in sidebarTabs"
+      < settings.indexOf('if (showCalendarTab) tabs.push({ value: "calendar", label: "Calendar" })'),
+    "system sits between workspaces and calendar in sidebarTabs"
   )
-  // A hidden System tab falls back to Appearance, like Workspaces.
+  // A hidden System tab falls back to Bar, like Workspaces.
   assert.match(settings, /function ensureVisibleTab\(\)/)
-  assert.match(settings, /if \(tab === "system" && probeSettled && !hasPlugin\("pizza\.dirty\.arch-updates"\)\) tab = "appearance"/)
+  assert.match(settings, /if \(tab === "system" && probeSettled && !hasPlugin\("pizza\.dirty\.arch-updates"\)\) tab = "bar"/)
   // Helpers mirror workspacesSetting/setWorkspaces, backed by the bar.
   assert.match(settings, /function systemSetting\(name, fallback\)/)
   assert.match(settings, /function setSystem\(patch\)/)
@@ -609,23 +618,125 @@ test("the settings window has a System tab for the Arch Updates widget", () => {
   assert.match(settings, /text: "Add the Arch Updates widget to the bar to change these\."/)
   assert.match(settings, /visible: !popup\.bar\.nyxiriSystemAvailable/)
   // Bar accessors mirror the workspaces/weather trio, and IPC can open
-  // the tab. Workspaces stays out of the validation list (pre-existing
-  // quirk, out of scope).
+  // the tab. The validation list now covers every tab, including
+  // workspaces (the old list left it out, so IPC could not open it),
+  // with "appearance" kept as the Bar alias.
   assert.match(bar, /function nyxiriSystemEntryKey\(\)/)
   assert.match(bar, /Nyxiri\.baseWidgetId\(key\) === "pizza\.dirty\.arch-updates"/)
   assert.match(bar, /function nyxiriSystemSetting\(name, fallback\)/)
   assert.match(bar, /nyxiriSystemAvailable: nyxiriSystemEntryKey\(\) !== ""/)
   assert.match(bar, /function writeSystemSettings\(patch\)/)
   assert.match(bar, /shell\.updateEntryInline\("pizza\.dirty\.arch-updates", next\)/)
-  assert.match(bar, /\["appearance", "monitors", "plugins", "system"\]/)
-  assert.doesNotMatch(bar, /"workspaces"\]/)
+  assert.match(bar, /\["bar", "menu", "weather", "monitors", "workspaces", "system", "calendar", "plugins"\]/)
+  assert.match(bar, /if \(wanted === "appearance"\) wanted = "bar"/)
+})
+
+test("the settings window splits Appearance into Bar, Menu, and Weather", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  const bar = read("Bar.qml")
+  // No Appearance tab anywhere: the default tab and the IPC default are Bar.
+  assert.doesNotMatch(settings, /property string (initialTab|tab): "appearance"/)
+  assert.match(settings, /property string initialTab: "bar"/)
+  assert.match(settings, /property string tab: "bar"/)
+  assert.match(bar, /property string nyxiriSettingsTab: "bar"/)
+  assert.match(bar, /String\(tab \|\| "bar"\)/)
+  // Three columns, one per group, in the old Appearance column's place.
+  assert.match(settings, /visible: popup\.tab === "bar"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "menu"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /visible: popup\.tab === "weather"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.doesNotMatch(settings, /visible: popup\.tab === "appearance"/)
+  // Bar holds the pill/colour/shape controls, Menu the trigger, Weather
+  // the secondary location. Nothing else moved.
+  assert.match(settings, /text: "BAR"/)
+  assert.match(settings, /text: "SECTION PILLS"/)
+  assert.match(settings, /text: "MENU TRIGGER"/)
+  assert.match(settings, /text: "Secondary location"/)
+  assert.match(settings, /popup\.weatherSetting\("secondaryLocation", ""\)/)
+  // Menu and Weather tabs are gated like Workspaces: only when their
+  // plugin is installed and enabled, once the probe has settled.
+  assert.match(settings, /readonly property bool showMenuTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.nyxiri-menu"\)/)
+  assert.match(settings, /readonly property bool showWeatherTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.weather"\)/)
+  // A hidden Menu or Weather tab falls back to Bar.
+  assert.match(settings, /if \(tab === "menu" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-menu"\)\) tab = "bar"/)
+  assert.match(settings, /if \(tab === "weather" && probeSettled && !hasPlugin\("pizza\.dirty\.weather"\)\) tab = "bar"/)
+  // Sidebar order: bar, menu-if-shown, weather-if-shown, monitors.
+  assert.ok(
+    settings.indexOf('{ value: "bar", label: "Bar" }')
+      < settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
+      && settings.indexOf('if (showMenuTab) tabs.push({ value: "menu", label: "Menu" })')
+      < settings.indexOf('if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })')
+      && settings.indexOf('if (showWeatherTab) tabs.push({ value: "weather", label: "Weather" })')
+      < settings.indexOf('tabs.push({ value: "monitors", label: "Monitors" })'),
+    "bar, menu, weather, monitors order in sidebarTabs"
+  )
+})
+
+test("the settings window has a Calendar tab for the clock's calendars", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  const script = read("scripts/write-calendars.py")
+  // Gating mirrors the other plugin tabs: only when the clock plugin is
+  // installed and enabled, once the probe has settled.
+  assert.match(settings, /readonly property bool showCalendarTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.clock"\)/)
+  assert.match(settings, /if \(showCalendarTab\) tabs\.push\(\{ value: "calendar", label: "Calendar" \}\)/)
+  assert.match(settings, /if \(tab === "calendar" && probeSettled && !hasPlugin\("pizza\.dirty\.clock"\)\) tab = "bar"/)
+  // The tab itself, placed after System. It reads the clock's config
+  // file (the pizza.dirty.clock path, not the legacy fred.clock one)
+  // through a watched FileView, so edits elsewhere show up and the
+  // clock refetches on the same change.
+  assert.match(settings, /visible: popup\.tab === "calendar"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.match(settings, /text: "CALENDAR"/)
+  assert.match(settings, /\.config\/pizza\.dirty\.clock\/calendars\.json/)
+  assert.doesNotMatch(settings, /\.config\/fred\.clock\/calendars\.json/)
+  assert.match(settings, /id: calendarsFile/)
+  assert.match(settings, /onFileChanged: popup\.loadCalendars\(\)/)
+  assert.match(settings, /function loadCalendars\(\)/)
+  // List, add, remove, enable. The add field takes a remote iCal/.ics
+  // link or a local .ics path: a link goes in `url`, a path in `path`,
+  // which is exactly how the fetcher tells them apart.
+  assert.match(settings, /model: popup\.calendars/)
+  assert.match(settings, /function addCalendar\(\)/)
+  assert.match(settings, /function removeCalendar\(index\)/)
+  assert.match(settings, /function setCalendarEnabled\(index, enabled\)/)
+  assert.match(settings, /link\.indexOf\("https:\/\/"\) === 0 \|\| link\.indexOf\("webcal:\/\/"\) === 0\) entry\.url = link/)
+  assert.match(settings, /else entry\.path = link/)
+  assert.match(settings, /Use https:\/\/ — the clock refuses plain http links\./)
+  assert.match(settings, /text: "Add calendar"/)
+  // Links are secrets: masked by default, revealed per row by an eye
+  // toggle, password-field style. The add field has the same toggle.
+  // A local path is not a secret and shows as-is.
+  assert.match(settings, /text: calRow\.showSecret \? String\(calRow\.modelData\.url \|\| ""\) : "••••••••••••"/)
+  assert.match(settings, /echoMode: popup\.newCalShowLink \? TextInput\.Normal : TextInput\.Password/)
+  assert.match(settings, /text: calRow\.showSecret \? "\\udb80\\ude09" : "\\udb80\\ude08"/)
+  assert.match(settings, /text: popup\.newCalShowLink \? "\\udb80\\ude09" : "\\udb80\\ude08"/)
+  assert.match(settings, /onClicked: calRow\.showSecret = !calRow\.showSecret/)
+  assert.match(settings, /onClicked: popup\.newCalShowLink = !popup\.newCalShowLink/)
+  // Writes go through the helper script as one argv (never a shell
+  // string), atomically at 0600; the tab restores the list if the
+  // write fails instead of showing a calendar that is not on disk.
+  assert.match(settings, /calendarsWrite\.command = \["python3", popup\.calendarsScript, "--file", popup\.calendarsPath, JSON\.stringify\(list\)\]/)
+  assert.match(settings, /popup\.calendars = popup\.calendarsBeforeSave/)
+  assert.match(settings, /scripts\/write-calendars\.py/)
+  // The helper validates shape and the link scheme, never echoes a
+  // value in an error, and writes atomically at 0600.
+  assert.match(script, /def normalize_entry/)
+  assert.match(script, /link\.startswith\("http:\/\/"\)/)
+  assert.match(script, /if not link\.startswith\("https:\/\/"\) and not link\.startswith\("webcal:\/\/"\):/)
+  assert.match(script, /os\.replace\(tmp_path, /)
+  assert.match(script, /0o600/)
+  assert.match(script, /0o700/)
+  assert.doesNotMatch(script, /print\(.*url/)
 })
 
 test("the settings window has a sidebar, a bat header, and a masked body", () => {
   const settings = read("NyxiriSettingsWindow.qml")
-  // Sidebar sections, one per tab.
+  // Sidebar sections, one per tab. Appearance is split: Bar, Menu,
+  // Weather replace it, and Calendar joins the plugin tabs.
   assert.match(settings, /id: sidebar/)
-  assert.match(settings, /\{ value: "appearance", label: "Appearance" \}/)
+  assert.match(settings, /\{ value: "bar", label: "Bar" \}/)
+  assert.doesNotMatch(settings, /\{ value: "appearance", label: "Appearance" \}/)
+  assert.match(settings, /\{ value: "menu", label: "Menu" \}/)
+  assert.match(settings, /\{ value: "weather", label: "Weather" \}/)
+  assert.match(settings, /\{ value: "calendar", label: "Calendar" \}/)
   assert.match(settings, /\{ value: "workspaces", label: "Workspaces" \}/)
   assert.match(settings, /\{ value: "plugins", label: "Plugins" \}/)
   // Bat header (nf-md-bat, U+F0B5F) and a close that does not shadow Window.close.

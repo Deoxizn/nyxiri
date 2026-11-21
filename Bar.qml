@@ -215,13 +215,15 @@ Item {
   // right-clicked.
   property bool nyxiriSettingsOpen: false
   property string nyxiriSettingsScreen: ""
-  property string nyxiriSettingsTab: "appearance"
+  property string nyxiriSettingsTab: "bar"
 
   function openNyxiriSettings(screenName, tab) {
     var name = screenName ? String(screenName) : focusedScreenName()
     if (!name) return false
     var wanted = String(tab || "")
-    nyxiriSettingsTab = ["appearance", "monitors", "plugins", "system"].indexOf(wanted) === -1 ? "appearance" : wanted
+    // "appearance" is the old Bar tab id, kept as an alias.
+    if (wanted === "appearance") wanted = "bar"
+    nyxiriSettingsTab = ["bar", "menu", "weather", "monitors", "workspaces", "system", "calendar", "plugins"].indexOf(wanted) === -1 ? "bar" : wanted
     nyxiriSettingsScreen = name
     nyxiriSettingsOpen = true
     return true
@@ -1904,7 +1906,7 @@ Item {
     }
 
     function openSettingsTab(tab): void {
-      root.openNyxiriSettings(root.focusedScreenName(), String(tab || "appearance"))
+      root.openNyxiriSettings(root.focusedScreenName(), String(tab || "bar"))
     }
 
     function setSections(mode): void {
