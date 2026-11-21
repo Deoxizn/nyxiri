@@ -40,24 +40,39 @@ test("normalize ignores unknown and prototype keys", () => {
 })
 
 test("normalize keeps a valid bat scope and defaults junk to all", () => {
-  assert.equal(Nyxiri.normalize({ batScope: "main" }).batScope, "main")
   assert.equal(Nyxiri.normalize({ batScope: "all" }).batScope, "all")
   assert.equal(Nyxiri.normalize({ batScope: "side" }).batScope, "all")
   assert.equal(Nyxiri.normalize({}).batScope, "all")
+  // The old "main" value is not a monitor name: it falls back to "all",
+  // no migration needed.
+  assert.equal(Nyxiri.normalize({ batScope: "main" }).batScope, "all")
+  // A monitor name only survives while that monitor is connected. The
+  // names below are test fixtures; the shipped list comes from the live
+  // screens, never hard-coded.
+  const screens = ["DP-1", "HDMI-A-1"]
+  assert.equal(Nyxiri.normalize({ batScope: "DP-1" }, screens).batScope, "DP-1")
+  assert.equal(Nyxiri.normalize({ batScope: "VGA-1" }, screens).batScope, "all")
+  assert.equal(Nyxiri.normalize({ batScope: "DP-1" }).batScope, "all")
 })
 
-test("batVisibleOn shows everywhere for all, only the main monitor for main", () => {
+test("batVisibleOn shows everywhere for all, only the named monitor for a monitor scope", () => {
+  const screens = ["DP-1", "HDMI-A-1"]
   const all = Nyxiri.normalize({})
-  assert.equal(Nyxiri.batVisibleOn(all, "DP-1", "DP-1"), true)
-  assert.equal(Nyxiri.batVisibleOn(all, "HDMI-A-1", "DP-1"), true)
+  assert.equal(Nyxiri.batVisibleOn(all, "DP-1", screens), true)
+  assert.equal(Nyxiri.batVisibleOn(all, "HDMI-A-1", screens), true)
 
-  const main = Nyxiri.normalize({ batScope: "main" })
-  assert.equal(Nyxiri.batVisibleOn(main, "DP-1", "DP-1"), true)
-  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", "DP-1"), false)
-  // No main screen known yet: the bat shows rather than stranding the
-  // settings behind a monitor with no button.
-  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", ""), true)
-  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", null), true)
+  const named = Nyxiri.normalize({ batScope: "DP-1" }, screens)
+  assert.equal(Nyxiri.batVisibleOn(named, "DP-1", screens), true)
+  assert.equal(Nyxiri.batVisibleOn(named, "HDMI-A-1", screens), false)
+  // A stored name that is not currently connected falls back to showing
+  // everywhere, so the bat never vanishes when a monitor is unplugged.
+  const unplugged = { batScope: "VGA-1" }
+  assert.equal(Nyxiri.batVisibleOn(unplugged, "DP-1", screens), true)
+  assert.equal(Nyxiri.batVisibleOn(unplugged, "HDMI-A-1", screens), true)
+  // No screen list to check against: a named scope shows rather than
+  // stranding the settings behind a monitor with no button.
+  assert.equal(Nyxiri.batVisibleOn(named, "HDMI-A-1", null), true)
+  assert.equal(Nyxiri.batVisibleOn(named, "HDMI-A-1", undefined), true)
 })
 
 test("normalize rejects non-object input", () => {

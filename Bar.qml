@@ -33,7 +33,7 @@ Item {
   // Nyxiri keeps its settings under bar.nyxiri so the host hands them back in
   // barConfig on every reload. Everything below reads this normalized view;
   // writes go through writeNyxiri().
-  readonly property var nyxiri: Nyxiri.normalize(barConfig ? barConfig.nyxiri : null)
+  readonly property var nyxiri: Nyxiri.normalize(barConfig ? barConfig.nyxiri : null, nyxiriScreenNames())
   readonly property var nyxiriPill: nyxiri.pill
   // Palette roles from the active theme's colors.toml, for the colour picker.
   property var nyxiriPalette: ({})
@@ -49,15 +49,20 @@ Item {
   function nyxiriMonitorEnabled(screenName) {
     return Nyxiri.monitorFor(nyxiri, screenName).enabled
   }
-  // The main monitor is the first screen Quickshell reports, the same
-  // fallback the settings window uses when its screen is unnamed. The
-  // bat scope setting ("main") hides the bat everywhere else.
-  function nyxiriMainScreenName() {
+  // Monitor names come from the live screens list, never hard-coded: the
+  // bat scope stores a monitor's name, so it has to match whatever this
+  // machine actually has connected.
+  function nyxiriScreenNames() {
     var screens = Quickshell.screens || []
-    return screens.length > 0 ? String(screens[0].name || "") : ""
+    var names = []
+    for (var i = 0; i < screens.length; i++) {
+      var name = String(screens[i].name || "")
+      if (name) names.push(name)
+    }
+    return names
   }
   function nyxiriBatVisible(screenName) {
-    return Nyxiri.batVisibleOn(nyxiri, screenName, nyxiriMainScreenName())
+    return Nyxiri.batVisibleOn(nyxiri, screenName, nyxiriScreenNames())
   }
   function nyxiriFilterKeys(screenName, keys) {
     return Nyxiri.filterKeys(nyxiri, screenName, keys)
@@ -923,7 +928,7 @@ Item {
     return shell.mutateShellConfig(function(config) {
       if (!config || typeof config !== "object") return
       if (!config.bar || typeof config.bar !== "object") config.bar = {}
-      config.bar.nyxiri = Nyxiri.normalize(Nyxiri.merge(config.bar.nyxiri, patch))
+      config.bar.nyxiri = Nyxiri.normalize(Nyxiri.merge(config.bar.nyxiri, patch), nyxiriScreenNames())
     })
   }
 
@@ -2701,8 +2706,8 @@ Item {
     // drives root.showTooltip directly instead of through the plugin API
     // that widget plugins use (their WidgetButton does the same).
     readonly property bool tooltipHovered: batMouse.containsMouse
-    // Hidden by the bat scope setting (Bar tab, "main" shows the bat only
-    // on the main monitor). A hidden bat collapses to zero size so the
+    // Hidden by the bat scope setting (Bar tab: a monitor name shows the
+    // bat only on that monitor). A hidden bat collapses to zero size so the
     // right modules and the island pill close up over it instead of
     // leaving a bat-shaped gap at the bar's end; the pill's right edge
     // lands in the same place either way, since the bat is anchored to

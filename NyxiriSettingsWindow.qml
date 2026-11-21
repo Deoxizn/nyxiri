@@ -50,6 +50,18 @@ PanelWindow {
   readonly property var palette: bar.nyxiriPalette
   readonly property var screenList: Quickshell.screens || []
 
+  // The bat scope buttons: "All monitors" plus one per live screen. The
+  // names come from the connected screens, never hard-coded, so the list
+  // matches whatever this machine has plugged in.
+  readonly property var batScopeOptions: {
+    var out = [{ value: "all", label: "All monitors" }]
+    for (var i = 0; i < screenList.length; i++) {
+      var name = String(screenList[i].name || "")
+      if (name) out.push({ value: name, label: name })
+    }
+    return out
+  }
+
   // Widget ids currently laid out, deduplicated from BarModel's `id#serial`
   // keys. This is what a per-monitor rule can name.
   readonly property var laidOutIds: {
@@ -1067,19 +1079,40 @@ PanelWindow {
               SectionLabel { text: "SETTINGS BUTTON" }
 
               // The bat opens this window, so it has to live somewhere:
-              // "Main monitor only" hides it on every other bar, it never
-              // hides on the main one.
-              Dropdown {
+              // picking a monitor hides it on every other bar. The buttons
+              // are built from the live screens, so the names are whatever
+              // this machine has connected. Same choice-row button pattern
+              // as SECTION PILLS above, not a Dropdown: the Dropdown would
+              // not expand on click here.
+              Column {
                 width: body.width
-                label: "Show the bat on"
-                value: popup.bar.nyxiri.batScope
-                options: [
-                  { value: "all", label: "All monitors" },
-                  { value: "main", label: "Main monitor only" }
-                ]
-                foreground: popup.bar.foreground
-                fontFamily: popup.bar.fontFamily
-                onChanged: function(value) { popup.setBatScope(value) }
+                spacing: Style.spacing.xxs
+
+                BodyText {
+                  text: "Show the bat on"
+                  width: parent.width
+                }
+
+                Row {
+                  id: batScopeRow
+                  width: parent.width
+                  spacing: Style.spacing.xs
+
+                  Repeater {
+                    id: batScopeRepeater
+                    model: popup.batScopeOptions
+
+                    delegate: Button {
+                      required property var modelData
+                      width: (batScopeRow.width - batScopeRow.spacing * (batScopeRepeater.count - 1)) / batScopeRepeater.count
+                      text: modelData.label
+                      selected: popup.bar.nyxiri.batScope === modelData.value
+                      bordered: !selected
+                      foreground: popup.bar.foreground
+                      onClicked: popup.setBatScope(modelData.value)
+                    }
+                  }
+                }
               }
             }
 

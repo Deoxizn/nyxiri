@@ -794,11 +794,16 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
 test("the Bar tab has a bat scope setting that writes through writeNyxiri", () => {
   const settings = read("NyxiriSettingsWindow.qml")
   assert.match(settings, /SectionLabel \{ text: "SETTINGS BUTTON" \}/)
-  assert.match(settings, /label: "Show the bat on"/)
-  assert.match(settings, /value: popup\.bar\.nyxiri\.batScope/)
-  assert.match(settings, /\{ value: "all", label: "All monitors" \}/)
-  assert.match(settings, /\{ value: "main", label: "Main monitor only" \}/)
-  assert.match(settings, /onChanged: function\(value\) \{ popup\.setBatScope\(value\) \}/)
+  // Buttons, not a Dropdown: the Dropdown would not expand on click here.
+  // One button per live screen plus "All monitors"; the names come from
+  // the connected screens, never hard-coded, so there is no "main" option
+  // and no monitor name in the shipped option list.
+  assert.match(settings, /readonly property var batScopeOptions:/)
+  assert.match(settings, /var out = \[\{ value: "all", label: "All monitors" \}\]/)
+  assert.match(settings, /model: popup\.batScopeOptions/)
+  assert.match(settings, /selected: popup\.bar\.nyxiri\.batScope === modelData\.value/)
+  assert.match(settings, /onClicked: popup\.setBatScope\(modelData\.value\)/)
+  assert.doesNotMatch(settings, /\{ value: "main", label: "Main monitor only" \}/)
   assert.match(settings, /function setBatScope\(scope\) \{\n\s+bar\.writeNyxiri\(\{ batScope: scope \}\)\n\s+\}/)
 })
 
@@ -838,13 +843,16 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   // island pill close up over it; the shown size is unchanged.
   assert.match(bar, /implicitWidth: !batShown \? 0 : \(root\.vertical \? batSize : batLength\)/)
   assert.match(bar, /implicitHeight: !batShown \? 0 : \(root\.vertical \? batLength : batSize\)/)
-  // The bat scope setting (Bar tab): "all" shows it everywhere, "main"
-  // only on the main monitor, which is the first screen Quickshell
-  // reports, the same fallback the settings window uses.
-  assert.match(bar, /function nyxiriMainScreenName\(\)/)
-  assert.match(bar, /screens\[0\]\.name/)
+  // The bat scope setting (Bar tab): "all" shows it everywhere, a monitor
+  // name shows it only on that monitor. The names come from the live
+  // screens, never hard-coded; there is no "main" option any more, the
+  // first screen turned out to be the wrong monitor (HDMI, not DP-1).
+  assert.match(bar, /function nyxiriScreenNames\(\)/)
+  assert.doesNotMatch(bar, /nyxiriMainScreenName/)
+  assert.doesNotMatch(bar, /screens\[0\]\.name/)
   assert.match(bar, /function nyxiriBatVisible\(screenName\)/)
-  assert.match(bar, /Nyxiri\.batVisibleOn\(nyxiri, screenName, nyxiriMainScreenName\(\)\)/)
+  assert.match(bar, /Nyxiri\.batVisibleOn\(nyxiri, screenName, nyxiriScreenNames\(\)\)/)
+  assert.match(bar, /Nyxiri\.normalize\(barConfig \? barConfig\.nyxiri : null, nyxiriScreenNames\(\)\)/)
   assert.match(bar, /readonly property bool batShown: root\.nyxiriBatVisible\(screenName\)/)
   assert.match(bar, /readonly property real inkShiftX: batSize \* 0\.17/)
   assert.match(bar, /readonly property real inkShiftY: batSize \* 0\.05/)

@@ -13,8 +13,11 @@ var SECTIONS = ["left", "center", "right"]
 var MODES = ["island", "mini"]
 var WIDGET_MODES = ["all", "only", "except"]
 // The bat (settings button) monitor scope: "all" shows it on every bar,
-// "main" shows it only on the main monitor (the first screen).
-var BAT_SCOPES = ["all", "main"]
+// otherwise the stored value is the name of one connected monitor. The
+// names are validated against the live screens at runtime, never
+// hard-coded: a monitor list is per-machine, so the option list is built
+// from whatever is connected.
+var BAT_SCOPE_ALL = "all"
 var SURFACES = ["theme", "clear"]
 var DEFAULT_COLOR = "accent"
 var HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
@@ -84,6 +87,18 @@ function stringIn(value, allowed, fallback) {
   return allowed.indexOf(text) === -1 ? fallback : text
 }
 
+// Validate a bat scope against the currently-connected monitor names.
+// "all" is always valid; a monitor name is valid only while that monitor
+// is connected. Anything else (junk, or the old "main" value, or a monitor
+// that has been unplugged) falls back to "all", so the bat never vanishes
+// entirely behind a stored name that matches nothing.
+function batScopeIn(value, knownScreens, fallback) {
+  var text = String(value === undefined || value === null ? "" : value)
+  if (text === BAT_SCOPE_ALL) return BAT_SCOPE_ALL
+  if (Array.isArray(knownScreens) && knownScreens.indexOf(text) !== -1) return text
+  return fallback
+}
+
 function isHexColor(value) {
   return typeof value === "string" && HEX_COLOR.test(value.trim())
 }
@@ -110,12 +125,15 @@ function monitorEntry(raw) {
 }
 
 // Returns a complete, validated config. Unknown keys are dropped, so a stale
-// field can never leak back into a persisted write.
-function normalize(raw) {
+// field can never leak back into a persisted write. knownScreens is the
+// list of currently-connected monitor names; the bat scope is validated
+// against it, so a stored monitor name only survives while that monitor
+// is connected.
+function normalize(raw, knownScreens) {
   var out = defaults()
   if (!isPlainObject(raw)) return out
 
-  out.batScope = stringIn(raw.batScope, BAT_SCOPES, out.batScope)
+  out.batScope = batScopeIn(raw.batScope, knownScreens, out.batScope)
 
   var sections = isPlainObject(raw.sections) ? raw.sections : null
   if (sections) {
@@ -227,16 +245,16 @@ function allows(config, screenName, widgetKey) {
 }
 
 // Whether the bat (settings button) shows on a monitor. Scope "all" shows
-// it everywhere; scope "main" shows it only on the main monitor, the first
-// screen, the same fallback the settings window uses for an unnamed screen.
-// With no main screen known yet the bat shows rather than stranding the
-// settings behind a monitor that has no button at all.
-function batVisibleOn(config, screenName, mainScreen) {
+// it everywhere; a monitor name shows it only on that monitor. A stored
+// name that is not currently connected falls back to showing everywhere,
+// so unplugging the chosen monitor never strands the settings behind a
+// bar with no button. With no screen list to check against, a named scope
+// also shows, for the same reason.
+function batVisibleOn(config, screenName, knownScreens) {
   var scope = config && typeof config.batScope === "string" ? config.batScope : "all"
-  if (scope !== "main") return true
-  var main = String(mainScreen === undefined || mainScreen === null ? "" : mainScreen)
-  if (!main) return true
-  return String(screenName === undefined || screenName === null ? "" : screenName) === main
+  if (scope === BAT_SCOPE_ALL) return true
+  if (!Array.isArray(knownScreens) || knownScreens.indexOf(scope) === -1) return true
+  return String(screenName === undefined || screenName === null ? "" : screenName) === scope
 }
 
 function filterKeys(config, screenName, keys) {
@@ -307,7 +325,7 @@ if (typeof module !== "undefined" && module.exports) {
     SECTIONS: SECTIONS,
     MODES: MODES,
     WIDGET_MODES: WIDGET_MODES,
-    BAT_SCOPES: BAT_SCOPES,
+    BAT_SCOPE_ALL: BAT_SCOPE_ALL,
     SURFACES: SURFACES,
     defaults: defaults,
     normalize: normalize,
