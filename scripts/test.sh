@@ -22,7 +22,7 @@ fi
 printf '\n== QML parse ==\n'
 qmllint_bin=/usr/lib/qt6/bin/qmllint
 if [[ -x $qmllint_bin ]]; then
-  for file in Bar.qml NyxiriSettings.qml; do
+  for file in Bar.qml NyxiriSettingsWindow.qml; do
     if "$qmllint_bin" "$file" 2>&1 | grep -E '^Error|Syntax|Expected|Unexpected' >&2; then
       printf 'parse errors in %s\n' "$file" >&2
       fail=1

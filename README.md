@@ -25,12 +25,12 @@ Nyxiri is the bar for the Omarchy shell. It styles the bar with rounded pills, p
 
 One command installs the whole suite:
 
-- Bar (`pizza.dirty.nyxiri`)
-- Menu (`pizza.dirty.nyxiri-menu`)
-- Workspaces (`pizza.dirty.nyxiri-workspaces`)
-- Clock (`pizza.dirty.clock`)
-- Weather (`pizza.dirty.weather`)
-- System Updater (`pizza.dirty.arch-updates`)
+- Bar: [**nyxiri**](https://github.com/Deoxizn/nyxiri) (`pizza.dirty.nyxiri`)
+- Menu: [**nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) (`pizza.dirty.nyxiri-menu`)
+- Workspaces: [**nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) (`pizza.dirty.nyxiri-workspaces`)
+- Clock: [**clock**](https://github.com/Deoxizn/omarchy-clock) (`pizza.dirty.clock`)
+- Weather: [**weather**](https://github.com/Deoxizn/omarchy-weather) (`pizza.dirty.weather`)
+- System Updater: [**arch-updates**](https://github.com/Deoxizn/Arch-Updates) (`pizza.dirty.arch-updates`)
 
 ```sh
 bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)
@@ -42,7 +42,9 @@ Fish users, wrap it:
 bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)'
 ```
 
-Add `--with-cats` at the end to also install the cat widgets: cpurr (`pizza.dirty.cpurr`) and bongocat (`pizza.dirty.bongocat`).
+Add `--with-cats` at the end to also install the cat widgets: [**cpurr**](https://github.com/Deoxizn/omarchy-cpurr) (`pizza.dirty.cpurr`) and [**bongocat**](https://github.com/Deoxizn/omarchy-bongocat) (`pizza.dirty.bongocat`).
+
+Wallcraft (`pizza.dirty.wallcraft`) is not included in this installer; it is a separate, independent install.
 
 Bar only:
 

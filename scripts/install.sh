@@ -150,7 +150,7 @@ elif [[ $mode == link ]]; then
 else
   rm -rf -- "$target"
   mkdir -p -- "$target"
-  cp -- manifest.json Bar.qml BarModel.js Nyxiri.js NyxiriSettings.qml README.md LICENSE "$target/"
+  cp -- manifest.json Bar.qml BarModel.js Nyxiri.js NyxiriSettingsWindow.qml README.md LICENSE "$target/"
   printf 'copied to %s\n' "$target"
   if (( install_menu )); then
     remove_if_installed pizza.dirty.nyxiri-menu "$menu_target"
