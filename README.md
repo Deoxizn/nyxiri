@@ -6,18 +6,20 @@ Nyxiri is the bar for the Omarchy shell. It styles the bar with rounded pills, p
 
 <table>
   <tr>
-    <td><img src="preview1.png" width="280" alt="Settings card, Appearance tab"></td>
-    <td><img src="preview2.png" width="280" alt="Settings card, Monitors tab"></td>
-    <td><img src="preview3.png" width="280" alt="Settings card, Workspaces tab"></td>
+    <td><img src="preview1.png" width="280" alt=""></td>
+    <td><img src="preview2.png" width="280" alt=""></td>
+    <td><img src="preview3.png" width="280" alt=""></td>
+    <td><img src="preview4.png" width="280" alt=""></td>
   </tr>
   <tr>
-    <td><img src="preview4.png" width="280" alt="Settings card, Plugins tab"></td>
-    <td><img src="preview5.png" width="280" alt="Menu, Appearance section with Nyxiri"></td>
-    <td><img src="preview6.png" width="280" alt="Menu, Nyxiri submenu"></td>
+    <td><img src="preview5.png" width="280" alt=""></td>
+    <td><img src="preview6.png" width="280" alt=""></td>
+    <td><img src="preview7.png" width="280" alt=""></td>
+    <td><img src="preview8.png" width="280" alt=""></td>
   </tr>
 </table>
 
-![The Nyxiri bar](preview7.png)
+![The Nyxiri bar](preview9.png)
 
 ## Install
 
