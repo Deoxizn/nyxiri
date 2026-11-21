@@ -49,6 +49,16 @@ Item {
   function nyxiriMonitorEnabled(screenName) {
     return Nyxiri.monitorFor(nyxiri, screenName).enabled
   }
+  // The main monitor is the first screen Quickshell reports, the same
+  // fallback the settings window uses when its screen is unnamed. The
+  // bat scope setting ("main") hides the bat everywhere else.
+  function nyxiriMainScreenName() {
+    var screens = Quickshell.screens || []
+    return screens.length > 0 ? String(screens[0].name || "") : ""
+  }
+  function nyxiriBatVisible(screenName) {
+    return Nyxiri.batVisibleOn(nyxiri, screenName, nyxiriMainScreenName())
+  }
   function nyxiriFilterKeys(screenName, keys) {
     return Nyxiri.filterKeys(nyxiri, screenName, keys)
   }
@@ -2691,9 +2701,17 @@ Item {
     // drives root.showTooltip directly instead of through the plugin API
     // that widget plugins use (their WidgetButton does the same).
     readonly property bool tooltipHovered: batMouse.containsMouse
+    // Hidden by the bat scope setting (Bar tab, "main" shows the bat only
+    // on the main monitor). A hidden bat collapses to zero size so the
+    // right modules and the island pill close up over it instead of
+    // leaving a bat-shaped gap at the bar's end; the pill's right edge
+    // lands in the same place either way, since the bat is anchored to
+    // the bar's edge with a fixed margin.
+    readonly property bool batShown: root.nyxiriBatVisible(screenName)
+    visible: batShown
 
-    implicitWidth: root.vertical ? batSize : batLength
-    implicitHeight: root.vertical ? batLength : batSize
+    implicitWidth: !batShown ? 0 : (root.vertical ? batSize : batLength)
+    implicitHeight: !batShown ? 0 : (root.vertical ? batLength : batSize)
 
     NyxiriPill {
       anchors.fill: parent

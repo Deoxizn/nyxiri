@@ -7,6 +7,7 @@ const Nyxiri = require("./_load-nyxiri.js")
 
 test("defaults cover every section and pill key", () => {
   const config = Nyxiri.defaults()
+  assert.equal(config.batScope, "all")
   assert.deepEqual(config.sections, { left: "island", center: "island", right: "island" })
   assert.equal(config.pill.color, "accent")
   assert.equal(config.pill.surface, "theme")
@@ -36,6 +37,27 @@ test("normalize ignores unknown and prototype keys", () => {
   const config = Nyxiri.normalize(raw)
   assert.equal(config.polluted, undefined)
   assert.equal({}.polluted, undefined)
+})
+
+test("normalize keeps a valid bat scope and defaults junk to all", () => {
+  assert.equal(Nyxiri.normalize({ batScope: "main" }).batScope, "main")
+  assert.equal(Nyxiri.normalize({ batScope: "all" }).batScope, "all")
+  assert.equal(Nyxiri.normalize({ batScope: "side" }).batScope, "all")
+  assert.equal(Nyxiri.normalize({}).batScope, "all")
+})
+
+test("batVisibleOn shows everywhere for all, only the main monitor for main", () => {
+  const all = Nyxiri.normalize({})
+  assert.equal(Nyxiri.batVisibleOn(all, "DP-1", "DP-1"), true)
+  assert.equal(Nyxiri.batVisibleOn(all, "HDMI-A-1", "DP-1"), true)
+
+  const main = Nyxiri.normalize({ batScope: "main" })
+  assert.equal(Nyxiri.batVisibleOn(main, "DP-1", "DP-1"), true)
+  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", "DP-1"), false)
+  // No main screen known yet: the bat shows rather than stranding the
+  // settings behind a monitor with no button.
+  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", ""), true)
+  assert.equal(Nyxiri.batVisibleOn(main, "HDMI-A-1", null), true)
 })
 
 test("normalize rejects non-object input", () => {

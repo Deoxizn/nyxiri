@@ -791,6 +791,17 @@ test("the bar opens settings from the bat, not from right-click or a card", () =
   assert.doesNotMatch(bar, /acceptedButtons: Qt\.RightButton/)
 })
 
+test("the Bar tab has a bat scope setting that writes through writeNyxiri", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  assert.match(settings, /SectionLabel \{ text: "SETTINGS BUTTON" \}/)
+  assert.match(settings, /label: "Show the bat on"/)
+  assert.match(settings, /value: popup\.bar\.nyxiri\.batScope/)
+  assert.match(settings, /\{ value: "all", label: "All monitors" \}/)
+  assert.match(settings, /\{ value: "main", label: "Main monitor only" \}/)
+  assert.match(settings, /onChanged: function\(value\) \{ popup\.setBatScope\(value\) \}/)
+  assert.match(settings, /function setBatScope\(scope\) \{\n\s+bar\.writeNyxiri\(\{ batScope: scope \}\)\n\s+\}/)
+})
+
 test("the bat button fits inside the bar thickness and its pill follows the right section", () => {
   const bar = read("Bar.qml")
   // The bar is 26 tall horizontal (28 vertical); the old hardcoded 28
@@ -823,8 +834,18 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   // vertical bar the glyph rotates 90 degrees so the wingspan runs along
   // the bar's length, with the offsets rotated with it.
   assert.match(bar, /readonly property int batLength: Math\.round\(batSize \* 1\.35\)/)
-  assert.match(bar, /implicitWidth: root\.vertical \? batSize : batLength/)
-  assert.match(bar, /implicitHeight: root\.vertical \? batLength : batSize/)
+  // A hidden bat collapses to zero size so the right modules and the
+  // island pill close up over it; the shown size is unchanged.
+  assert.match(bar, /implicitWidth: !batShown \? 0 : \(root\.vertical \? batSize : batLength\)/)
+  assert.match(bar, /implicitHeight: !batShown \? 0 : \(root\.vertical \? batLength : batSize\)/)
+  // The bat scope setting (Bar tab): "all" shows it everywhere, "main"
+  // only on the main monitor, which is the first screen Quickshell
+  // reports, the same fallback the settings window uses.
+  assert.match(bar, /function nyxiriMainScreenName\(\)/)
+  assert.match(bar, /screens\[0\]\.name/)
+  assert.match(bar, /function nyxiriBatVisible\(screenName\)/)
+  assert.match(bar, /Nyxiri\.batVisibleOn\(nyxiri, screenName, nyxiriMainScreenName\(\)\)/)
+  assert.match(bar, /readonly property bool batShown: root\.nyxiriBatVisible\(screenName\)/)
   assert.match(bar, /readonly property real inkShiftX: batSize \* 0\.17/)
   assert.match(bar, /readonly property real inkShiftY: batSize \* 0\.05/)
   assert.match(bar, /anchors\.horizontalCenterOffset: root\.vertical \? -inkShiftY : -inkShiftX/)

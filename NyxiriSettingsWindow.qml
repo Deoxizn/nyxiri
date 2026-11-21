@@ -181,6 +181,10 @@ PanelWindow {
     bar.writeNyxiri({ sections: sections })
   }
 
+  function setBatScope(scope) {
+    bar.writeNyxiri({ batScope: scope })
+  }
+
   function setPill(patch) {
     bar.writeNyxiri({ pill: patch })
   }
@@ -1058,6 +1062,24 @@ PanelWindow {
                 integer: true
                 valueText: String(popup.pill.padding) + "px"
                 onReleased: function(value) { popup.setPill({ padding: value }) }
+              }
+
+              SectionLabel { text: "SETTINGS BUTTON" }
+
+              // The bat opens this window, so it has to live somewhere:
+              // "Main monitor only" hides it on every other bar, it never
+              // hides on the main one.
+              Dropdown {
+                width: body.width
+                label: "Show the bat on"
+                value: popup.bar.nyxiri.batScope
+                options: [
+                  { value: "all", label: "All monitors" },
+                  { value: "main", label: "Main monitor only" }
+                ]
+                foreground: popup.bar.foreground
+                fontFamily: popup.bar.fontFamily
+                onChanged: function(value) { popup.setBatScope(value) }
               }
             }
 

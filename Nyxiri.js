@@ -12,6 +12,9 @@
 var SECTIONS = ["left", "center", "right"]
 var MODES = ["island", "mini"]
 var WIDGET_MODES = ["all", "only", "except"]
+// The bat (settings button) monitor scope: "all" shows it on every bar,
+// "main" shows it only on the main monitor (the first screen).
+var BAT_SCOPES = ["all", "main"]
 var SURFACES = ["theme", "clear"]
 var DEFAULT_COLOR = "accent"
 var HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
@@ -49,6 +52,7 @@ function clone(value) {
 function defaults() {
   return {
     version: 1,
+    batScope: "all",
     sections: { left: "island", center: "island", right: "island" },
     pill: {
       color: DEFAULT_COLOR,
@@ -110,6 +114,8 @@ function monitorEntry(raw) {
 function normalize(raw) {
   var out = defaults()
   if (!isPlainObject(raw)) return out
+
+  out.batScope = stringIn(raw.batScope, BAT_SCOPES, out.batScope)
 
   var sections = isPlainObject(raw.sections) ? raw.sections : null
   if (sections) {
@@ -220,6 +226,19 @@ function allows(config, screenName, widgetKey) {
   return mode === "only" ? found : !found
 }
 
+// Whether the bat (settings button) shows on a monitor. Scope "all" shows
+// it everywhere; scope "main" shows it only on the main monitor, the first
+// screen, the same fallback the settings window uses for an unnamed screen.
+// With no main screen known yet the bat shows rather than stranding the
+// settings behind a monitor that has no button at all.
+function batVisibleOn(config, screenName, mainScreen) {
+  var scope = config && typeof config.batScope === "string" ? config.batScope : "all"
+  if (scope !== "main") return true
+  var main = String(mainScreen === undefined || mainScreen === null ? "" : mainScreen)
+  if (!main) return true
+  return String(screenName === undefined || screenName === null ? "" : screenName) === main
+}
+
 function filterKeys(config, screenName, keys) {
   if (!Array.isArray(keys)) return []
   var monitor = monitorFor(config, screenName)
@@ -288,6 +307,7 @@ if (typeof module !== "undefined" && module.exports) {
     SECTIONS: SECTIONS,
     MODES: MODES,
     WIDGET_MODES: WIDGET_MODES,
+    BAT_SCOPES: BAT_SCOPES,
     SURFACES: SURFACES,
     defaults: defaults,
     normalize: normalize,
@@ -295,6 +315,7 @@ if (typeof module !== "undefined" && module.exports) {
     sectionMode: sectionMode,
     monitorFor: monitorFor,
     allows: allows,
+    batVisibleOn: batVisibleOn,
     filterKeys: filterKeys,
     baseWidgetId: baseWidgetId,
     shortWidgetId: shortWidgetId,
