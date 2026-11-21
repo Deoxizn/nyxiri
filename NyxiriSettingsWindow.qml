@@ -120,7 +120,7 @@ PanelWindow {
       { value: "monitors", label: "Monitors" }
     ]
     if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
-    if (showSystemTab) tabs.push({ value: "system", label: "System" })
+    if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })
     tabs.push({ value: "plugins", label: "Plugins" })
     return tabs
   }
@@ -1330,7 +1330,7 @@ PanelWindow {
               width: parent.width
               spacing: Style.space(16)
 
-              SectionLabel { text: "SYSTEM" }
+              SectionLabel { text: "SYSTEM UPDATER" }
 
               SubLabel {
                 visible: popup.bar.nyxiriSystemAvailable

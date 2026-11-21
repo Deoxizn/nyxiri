@@ -543,11 +543,11 @@ test("the settings window has a System tab for the Arch Updates widget", () => {
   assert.match(settings, /readonly property bool showSystemTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.arch-updates"\)/)
   // Sidebar order: appearance, monitors, workspaces-if-shown,
   // system-if-shown, plugins.
-  assert.match(settings, /if \(showSystemTab\) tabs\.push\(\{ value: "system", label: "System" \}\)/)
+  assert.match(settings, /if \(showSystemTab\) tabs\.push\(\{ value: "system", label: "System Updater" \}\)/)
   assert.ok(
     settings.indexOf('if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })')
-      < settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System" })')
-      && settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System" })')
+      < settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
+      && settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System Updater" })')
       < settings.indexOf('tabs.push({ value: "plugins", label: "Plugins" })'),
     "system sits between workspaces and plugins in sidebarTabs"
   )
@@ -568,7 +568,7 @@ test("the settings window has a System tab for the Arch Updates widget", () => {
       < settings.indexOf('visible: popup.tab === "monitors"'),
     "system tab column sits between workspaces and monitors"
   )
-  assert.match(settings, /text: "SYSTEM"/)
+  assert.match(settings, /text: "SYSTEM UPDATER"/)
   // Refresh interval: 300-7200s, step 300, default 1800, shown in minutes.
   assert.match(settings, /label: "Refresh interval"/)
   assert.match(settings, /popup\.systemSetting\("refreshIntervalSec", 1800\)/)
