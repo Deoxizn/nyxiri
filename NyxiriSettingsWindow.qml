@@ -108,6 +108,7 @@ PanelWindow {
   // is installed. Once settled, a missing plugin's tab or section goes.
   readonly property bool showWorkspacesTab: !probeSettled || hasPlugin("pizza.dirty.nyxiri-workspaces")
   readonly property bool showMenuTrigger: !probeSettled || hasPlugin("pizza.dirty.nyxiri-menu")
+  readonly property bool showSystemTab: !probeSettled || hasPlugin("pizza.dirty.arch-updates")
 
   // The sidebar's sections, with Workspaces only when its plugin is
   // installed (and the probe has settled). Appearance, Monitors, and
@@ -119,6 +120,7 @@ PanelWindow {
       { value: "monitors", label: "Monitors" }
     ]
     if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })
+    if (showSystemTab) tabs.push({ value: "system", label: "System" })
     tabs.push({ value: "plugins", label: "Plugins" })
     return tabs
   }
@@ -128,6 +130,7 @@ PanelWindow {
   // window never shows a hidden tab's content with no way back.
   function ensureVisibleTab() {
     if (tab === "workspaces" && probeSettled && !hasPlugin("pizza.dirty.nyxiri-workspaces")) tab = "appearance"
+    if (tab === "system" && probeSettled && !hasPlugin("pizza.dirty.arch-updates")) tab = "appearance"
   }
 
   // Active plugins first, then disabled, each group alphabetical by name.
@@ -217,6 +220,14 @@ PanelWindow {
 
   function setWeather(patch) {
     popup.bar.writeWeatherSettings(patch)
+  }
+
+  function systemSetting(name, fallback) {
+    return popup.bar.nyxiriSystemSetting(name, fallback)
+  }
+
+  function setSystem(patch) {
+    popup.bar.writeSystemSettings(patch)
   }
 
   // ---------------------------------------------------------------- classic
@@ -1304,6 +1315,109 @@ PanelWindow {
                 visible: !popup.bar.nyxiriWorkspacesAvailable
                 width: body.width
                 text: "Add the Nyxiri workspaces widget to the bar to change these."
+                color: Qt.darker(popup.bar.foreground, 1.35)
+                font.pixelSize: Style.font.caption
+              }
+            }
+
+            // ------------------------------------------------------------ system
+            // The Arch Updates widget's settings live in its own layout entry;
+            // only offer these controls when it is actually on the bar. Same
+            // keys, types, and defaults as the plugin's own popup, so the
+            // two stay in sync.
+            Column {
+              visible: popup.tab === "system"
+              width: parent.width
+              spacing: Style.space(16)
+
+              SectionLabel { text: "SYSTEM" }
+
+              SubLabel {
+                visible: popup.bar.nyxiriSystemAvailable
+                text: "Refresh"
+              }
+
+              SliderRow {
+                visible: popup.bar.nyxiriSystemAvailable
+                label: "Refresh interval"
+                value: popup.systemSetting("refreshIntervalSec", 1800)
+                minimum: 300
+                maximum: 7200
+                step: 300
+                integer: true
+                valueText: String(Math.round(popup.systemSetting("refreshIntervalSec", 1800) / 60)) + " min"
+                onReleased: function(value) { popup.setSystem({ refreshIntervalSec: value }) }
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "Automatic checks"
+                description: popup.systemSetting("autoRefresh", true) === true || popup.systemSetting("autoRefresh", true) === "true" ? "Check on the interval and once after startup" : "Checks run only when the panel is opened"
+                checked: popup.systemSetting("autoRefresh", true) === true || popup.systemSetting("autoRefresh", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ autoRefresh: !checked })
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "Always show"
+                description: popup.systemSetting("alwaysShow", true) === true || popup.systemSetting("alwaysShow", true) === "true" ? "Keep the icon visible even when no updates are available" : "Hide the icon when everything is up to date"
+                checked: popup.systemSetting("alwaysShow", true) === true || popup.systemSetting("alwaysShow", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ alwaysShow: !checked })
+              }
+
+              SubLabel {
+                visible: popup.bar.nyxiriSystemAvailable
+                text: "Sources"
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "AUR"
+                description: "AUR updates from your helper (yay or paru)"
+                checked: popup.systemSetting("checkAur", true) === true || popup.systemSetting("checkAur", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ checkAur: !checked })
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "Flatpak"
+                description: "Flatpak updates"
+                checked: popup.systemSetting("checkFlatpak", true) === true || popup.systemSetting("checkFlatpak", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ checkFlatpak: !checked })
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "mise"
+                description: "mise dev tools"
+                checked: popup.systemSetting("checkMise", true) === true || popup.systemSetting("checkMise", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ checkMise: !checked })
+              }
+
+              Toggle {
+                visible: popup.bar.nyxiriSystemAvailable
+                width: body.width
+                label: "Plugins & themes"
+                description: "Git-managed shell plugins and themes"
+                checked: popup.systemSetting("checkPlugins", true) === true || popup.systemSetting("checkPlugins", true) === "true"
+                foreground: popup.bar.foreground
+                onClicked: popup.setSystem({ checkPlugins: !checked })
+              }
+
+              BodyText {
+                visible: !popup.bar.nyxiriSystemAvailable
+                width: body.width
+                text: "Add the Arch Updates widget to the bar to change these."
                 color: Qt.darker(popup.bar.foreground, 1.35)
                 font.pixelSize: Style.font.caption
               }

@@ -475,7 +475,7 @@ test("the Widgets tab is now the Plugins tab, with Active and Disabled sub-tabs"
   assert.match(settings, /visible: popup\.tab === "plugins"/)
   assert.doesNotMatch(settings, /popup\.tab === "widgets"/)
   // The tab validates the new value.
-  assert.match(read("Bar.qml"), /\["appearance", "monitors", "plugins"\]/)
+  assert.match(read("Bar.qml"), /\["appearance", "monitors", "plugins", "system"\]/)
   // Active / Disabled are sub-tabs now, not stacked groups: each group is
   // its own model from the sorted list, and only the picked one shows.
   assert.match(settings, /activePluginList: popup\.sortedPlugins\.filter\(function\(p\) \{ return p\.enabled === true \}\)/)
@@ -533,6 +533,92 @@ test("the settings window hides tabs and sections for plugins that are not insta
   assert.match(settings, /if \(tab === "workspaces" && probeSettled && !hasPlugin\("pizza\.dirty\.nyxiri-workspaces"\)\) tab = "appearance"/)
   assert.match(settings, /ensureVisibleTab\(\)/)
   assert.match(settings, /onProbeSettledChanged: ensureVisibleTab\(\)/)
+})
+
+test("the settings window has a System tab for the Arch Updates widget", () => {
+  const settings = read("NyxiriSettingsWindow.qml")
+  const bar = read("Bar.qml")
+  // Gating mirrors Workspaces: shown while the probe has not settled, and
+  // once settled only when pizza.dirty.arch-updates is installed and enabled.
+  assert.match(settings, /readonly property bool showSystemTab: !probeSettled \|\| hasPlugin\("pizza\.dirty\.arch-updates"\)/)
+  // Sidebar order: appearance, monitors, workspaces-if-shown,
+  // system-if-shown, plugins.
+  assert.match(settings, /if \(showSystemTab\) tabs\.push\(\{ value: "system", label: "System" \}\)/)
+  assert.ok(
+    settings.indexOf('if (showWorkspacesTab) tabs.push({ value: "workspaces", label: "Workspaces" })')
+      < settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System" })')
+      && settings.indexOf('if (showSystemTab) tabs.push({ value: "system", label: "System" })')
+      < settings.indexOf('tabs.push({ value: "plugins", label: "Plugins" })'),
+    "system sits between workspaces and plugins in sidebarTabs"
+  )
+  // A hidden System tab falls back to Appearance, like Workspaces.
+  assert.match(settings, /function ensureVisibleTab\(\)/)
+  assert.match(settings, /if \(tab === "system" && probeSettled && !hasPlugin\("pizza\.dirty\.arch-updates"\)\) tab = "appearance"/)
+  // Helpers mirror workspacesSetting/setWorkspaces, backed by the bar.
+  assert.match(settings, /function systemSetting\(name, fallback\)/)
+  assert.match(settings, /function setSystem\(patch\)/)
+  assert.match(settings, /popup\.bar\.nyxiriSystemSetting\(name, fallback\)/)
+  assert.match(settings, /popup\.bar\.writeSystemSettings\(patch\)/)
+  // The tab itself, placed between Workspaces and Monitors.
+  assert.match(settings, /visible: popup\.tab === "system"\n\s+width: parent\.width\n\s+spacing: Style\.space\(16\)/)
+  assert.ok(
+    settings.indexOf('visible: popup.tab === "workspaces"')
+      < settings.indexOf('visible: popup.tab === "system"')
+      && settings.indexOf('visible: popup.tab === "system"')
+      < settings.indexOf('visible: popup.tab === "monitors"'),
+    "system tab column sits between workspaces and monitors"
+  )
+  assert.match(settings, /text: "SYSTEM"/)
+  // Refresh interval: 300-7200s, step 300, default 1800, shown in minutes.
+  assert.match(settings, /label: "Refresh interval"/)
+  assert.match(settings, /popup\.systemSetting\("refreshIntervalSec", 1800\)/)
+  assert.match(settings, /minimum: 300/)
+  assert.match(settings, /maximum: 7200/)
+  assert.match(settings, /step: 300/)
+  assert.match(settings, /\+ " min"/)
+  assert.match(settings, /popup\.setSystem\(\{ refreshIntervalSec: value \}\)/)
+  // Automatic checks and Always show, both default true, string-"true"
+  // coerced like the Workspaces tab's Cycle layout toggle.
+  assert.match(settings, /label: "Automatic checks"/)
+  assert.match(settings, /popup\.systemSetting\("autoRefresh", true\) === true \|\| popup\.systemSetting\("autoRefresh", true\) === "true"/)
+  assert.match(settings, /popup\.setSystem\(\{ autoRefresh: !checked \}\)/)
+  assert.match(settings, /Check on the interval and once after startup/)
+  assert.match(settings, /Checks run only when the panel is opened/)
+  assert.match(settings, /label: "Always show"/)
+  assert.match(settings, /popup\.systemSetting\("alwaysShow", true\) === true \|\| popup\.systemSetting\("alwaysShow", true\) === "true"/)
+  assert.match(settings, /popup\.setSystem\(\{ alwaysShow: !checked \}\)/)
+  assert.match(settings, /Keep the icon visible even when no updates are available/)
+  assert.match(settings, /Hide the icon when everything is up to date/)
+  // Four source toggles, all default true, all gated on the widget being
+  // on the bar.
+  for (const [key, label] of [
+    ["checkAur", "AUR"],
+    ["checkFlatpak", "Flatpak"],
+    ["checkMise", "mise"],
+    ["checkPlugins", "Plugins & themes"],
+  ]) {
+    assert.match(settings, new RegExp("label: \"" + label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\""))
+    assert.match(settings, new RegExp("popup\\.systemSetting\\(\"" + key + "\", true\\) === true \\|\\| popup\\.systemSetting\\(\"" + key + "\", true\\) === \"true\""))
+    assert.match(settings, new RegExp("popup\\.setSystem\\(\\{ " + key + ": !checked \\}\\)"))
+  }
+  assert.match(settings, /AUR updates from your helper \(yay or paru\)/)
+  assert.match(settings, /Flatpak updates/)
+  assert.match(settings, /mise dev tools/)
+  assert.match(settings, /Git-managed shell plugins and themes/)
+  // Not on the bar: the same shape of message as the Workspaces tab.
+  assert.match(settings, /text: "Add the Arch Updates widget to the bar to change these\."/)
+  assert.match(settings, /visible: !popup\.bar\.nyxiriSystemAvailable/)
+  // Bar accessors mirror the workspaces/weather trio, and IPC can open
+  // the tab. Workspaces stays out of the validation list (pre-existing
+  // quirk, out of scope).
+  assert.match(bar, /function nyxiriSystemEntryKey\(\)/)
+  assert.match(bar, /Nyxiri\.baseWidgetId\(key\) === "pizza\.dirty\.arch-updates"/)
+  assert.match(bar, /function nyxiriSystemSetting\(name, fallback\)/)
+  assert.match(bar, /nyxiriSystemAvailable: nyxiriSystemEntryKey\(\) !== ""/)
+  assert.match(bar, /function writeSystemSettings\(patch\)/)
+  assert.match(bar, /shell\.updateEntryInline\("pizza\.dirty\.arch-updates", next\)/)
+  assert.match(bar, /\["appearance", "monitors", "plugins", "system"\]/)
+  assert.doesNotMatch(bar, /"workspaces"\]/)
 })
 
 test("the settings window has a sidebar, a bat header, and a masked body", () => {

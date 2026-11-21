@@ -110,6 +110,25 @@ Item {
     return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
   }
   readonly property bool nyxiriWeatherAvailable: nyxiriWeatherEntryKey() !== ""
+  // The Arch Updates widget's settings live in its own bar layout entry, like
+  // the menu, workspaces, and weather forks'. The card can edit them only when
+  // pizza.dirty.arch-updates is actually on the bar.
+  function nyxiriSystemEntryKey() {
+    var entries = layoutWidgets && layoutWidgets.entries ? layoutWidgets.entries : ({})
+    for (var key in entries) {
+      if (Nyxiri.baseWidgetId(key) === "pizza.dirty.arch-updates") return String(key)
+    }
+    return ""
+  }
+  function nyxiriSystemSetting(name, fallback) {
+    var key = nyxiriSystemEntryKey()
+    if (!key) return fallback
+    var entries = layoutWidgets.entries
+    var entry = entries[key]
+    if (!entry || typeof entry !== "object") return fallback
+    return entry[name] === undefined || entry[name] === null ? fallback : entry[name]
+  }
+  readonly property bool nyxiriSystemAvailable: nyxiriSystemEntryKey() !== ""
   // NYXIRI-END nyxiri-config
   // Injected by the host shell. Used for shell-wide actions such as opening
   // settings and persisting inline widget state.
@@ -202,7 +221,7 @@ Item {
     var name = screenName ? String(screenName) : focusedScreenName()
     if (!name) return false
     var wanted = String(tab || "")
-    nyxiriSettingsTab = ["appearance", "monitors", "plugins"].indexOf(wanted) === -1 ? "appearance" : wanted
+    nyxiriSettingsTab = ["appearance", "monitors", "plugins", "system"].indexOf(wanted) === -1 ? "appearance" : wanted
     nyxiriSettingsScreen = name
     nyxiriSettingsOpen = true
     return true
@@ -940,6 +959,21 @@ Item {
     }
     for (var patchName in patch) next[patchName] = patch[patchName]
     return shell.updateEntryInline("pizza.dirty.weather", next)
+  }
+
+  // Replace pizza.dirty.arch-updates' inline settings with the current entry
+  // plus `patch`. Same replace-not-merge contract as writeMenuSettings.
+  function writeSystemSettings(patch) {
+    if (!shell || typeof shell.updateEntryInline !== "function") return false
+    var key = nyxiriSystemEntryKey()
+    if (!key) return false
+    var entry = layoutWidgets.entries[key]
+    var next = {}
+    if (entry && typeof entry === "object") {
+      for (var name in entry) if (name !== "id") next[name] = entry[name]
+    }
+    for (var patchName in patch) next[patchName] = patch[patchName]
+    return shell.updateEntryInline("pizza.dirty.arch-updates", next)
   }
   // NYXIRI-END nyxiri-write
 
