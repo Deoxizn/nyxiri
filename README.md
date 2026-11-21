@@ -224,6 +224,8 @@ The window is a Noctalia-style sidebar window (880x620, bat glyph and Nyxiri hea
   Active and Disabled sub-tabs, each group alphabetical, and the header
   counts all three (`52 plugins · 18 active · 34 disabled`).
 
+The Bar tab's SETTINGS BUTTON section picks which monitor's bar shows the bat (`bar.nyxiri.batScope` in shell.json): All monitors, or one of the detected monitors; if that monitor is unplugged, the bat shows on every bar so settings stay reachable.
+
 The window only shows tabs and sections for plugins that are installed and enabled: Workspaces appears when the workspaces widget is installed, System Updater when the arch-updates widget is installed, and the Menu Trigger section when the menu plugin is installed. Install a plugin and its tab shows up; the window reads as one bundled shell, not a list of dead settings.
 
 A tab whose content is taller than the window shows a scrollbar on the right
