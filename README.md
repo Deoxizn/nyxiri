@@ -11,7 +11,7 @@ Nyxiri is a drop-in **bar plugin** for the Omarchy shell. It keeps the upstream
   (not just the accent), or a custom hex, with separate fill and border
   opacity.
 
-Settings live in an in-bar card, opened by right-clicking the bar or with:
+Settings live in a settings window, opened from the bat icon on the bar (last slot on the right; hover shows "Nyxiri Settings") or over IPC:
 
 ```sh
 omarchy-shell pizza.dirty.nyxiri openSettings
@@ -60,11 +60,11 @@ bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main
 That installs, in order:
 
 - [**nyxiri**](https://github.com/Deoxizn/nyxiri) — the bar (this repo).
-- [**nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu entry, under Appearance.
+- [**nyxiri-menu**](https://github.com/Deoxizn/nyxiri-menu) — the Omarchy menu (app launcher).
 - [**nyxiri-workspaces**](https://github.com/Deoxizn/nyxiri-workspaces) — the workspaces widget (see below).
 - [**clock**](https://github.com/Deoxizn/omarchy-clock) — the clock widget, with a calendar panel.
 - [**weather**](https://github.com/Deoxizn/omarchy-weather) — the weather widget, 10-day forecast plus a second city.
-- [**arch-updates**](https://github.com/Deoxizn/Arch-Updates) — repo, AUR, mise and git plugin/theme update counts.
+- [**arch-updates**](https://github.com/Deoxizn/Arch-Updates) — system updates: one combined Omarchy + Arch section plus AUR, Flatpak, mise and git plugin/theme counts, with a per-source panel.
 
 Add `--with-cats` to also install the cat widgets, [**cpurr**](https://github.com/Deoxizn/omarchy-cpurr)
 and [**bongocat**](https://github.com/Deoxizn/omarchy-bongocat). They are fun, not core, so they are opt-in.
@@ -123,7 +123,7 @@ omarchy plugin disable pizza.dirty.nyxiri
 ## Configuration
 
 Nyxiri stores everything under `bar.nyxiri` in `~/.config/omarchy/shell.json`.
-The settings card writes this file through the bar API; hand edits are fine and
+The settings window writes this file through the bar API; hand edits are fine and
 are picked up on the next shell reload.
 
 ```jsonc
@@ -179,7 +179,7 @@ A monitor with no entry is fully enabled and shows every widget. In a rule:
 - `except` hides the listed widget ids.
 
 Rules match either the whole layout key (`omarchy.clock#4`) or the plugin id
-(`omarchy.clock`). The id form is what the settings card writes and survives
+(`omarchy.clock`). The id form is what the settings window writes and survives
 reloads; `#serial` keys are an internal layout detail.
 
 Disabling a monitor's bar unmaps that surface and reserves no space. Other
@@ -195,40 +195,44 @@ be a hex colour. A hex in `pill.color` works directly too.
 `surface: "clear"` drops the bar's own background so only the pills read;
 `"theme"` keeps the configured Omarchy bar background.
 
-## Settings card
+## Settings window
 
-Right-click any bar surface, or run one of:
+Click the bat icon on the bar (last slot on the right; hover shows "Nyxiri Settings"), or run one of:
 
 ```sh
 omarchy-shell pizza.dirty.nyxiri openSettings
 omarchy-shell pizza.dirty.nyxiri toggleSettings
 omarchy-shell pizza.dirty.nyxiri closeSettings
+omarchy-shell pizza.dirty.nyxiri openSettingsTab system
 ```
 
-The card is a `PopupCard` centered under the bar. Its tabs are:
+The window is a Noctalia-style sidebar window (880x620, bat glyph and Nyxiri header on the left, Close at the bottom). Its tabs are:
 
 - **Appearance** — section modes, colour role, custom hex, fill/border
   opacity, border width, island padding, bar surface and bar background
-  opacity.
+  opacity, and the Menu Trigger section (icon mode, wordmark, hover opens
+  submenus).
 - **Monitors** — per-monitor bar toggle and widget rules.
 - **Workspaces** — mode, marker style, hide-empty, and the Classic
   workspaces toggle with per-monitor ranges, for the Nyxiri workspaces
-  widget, shown while that widget is on the bar.
+  widget.
+- **System Updater** — refresh interval, automatic checks, always show,
+  and per-source toggles, for the arch-updates widget.
 - **Plugins** — enable/disable installed plugins, add one to the bar, use a bar
   option as the active bar, or reset to the built-in bar. These actions run
-  the official `omarchy` CLI, so behaviour matches the menu. The list is
-  grouped under Active and Disabled headings, each group alphabetical, and the
-  header counts both (`52 plugins · 18 active`).
+  the official `omarchy` CLI, so behaviour matches the menu. The list has
+  Active and Disabled sub-tabs, each group alphabetical, and the header
+  counts all three (`52 plugins · 18 active · 34 disabled`).
 
-A tab whose content is taller than the card shows a scrollbar on the right
+The window only shows tabs and sections for plugins that are installed and enabled: Workspaces appears when the workspaces widget is installed, System Updater when the arch-updates widget is installed, and the Menu Trigger section when the menu plugin is installed. Install a plugin and its tab shows up; the window reads as one bundled shell, not a list of dead settings.
+
+A tab whose content is taller than the window shows a scrollbar on the right
 edge (Plugins, and Appearance or Monitors on a short screen); drag it or
 scroll with the wheel.
 
 ## Menu integration
 
-The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) fork adds a
-**Nyxiri** entry to the Omarchy menu, under **Appearance**, and calls
-`openSettings` over IPC. It is optional; Nyxiri works without it.
+The separate [nyxiri-menu](https://github.com/Deoxizn/nyxiri-menu) plugin is the main Omarchy menu (app launcher, opened from the NYXIRI wordmark trigger on the bar). It used to carry a Nyxiri settings submenu under Appearance; that is gone, settings live in the window opened from the bat icon. The menu is optional; Nyxiri works without it.
 
 ## Workspaces widget
 
@@ -237,11 +241,10 @@ plugin replaces the stock workspaces widget with one the bar can style:
 eight marker styles (numbers, kanji, Pac-Man/ghost, dots, magic, default,
 aurora, apps), a Ten / Five / Active only mode, and hide-empty. It also
 carries a Classic workspaces mode (one global set 1-10, as in Omarchy
-4.0.6, with per-monitor ranges like `DP-1:1-5,HDMI-A-1:6-10`); the card's
-toggle runs the plugin's `bin/mode` and the ranges field writes the
+4.0.6, with per-monitor ranges like `DP-1:1-5,HDMI-A-1:6-10`); the settings window's Workspaces tab toggle runs the plugin's `bin/mode` and the ranges field writes the
 widget's `ranges` setting. Its settings live on the widget's own layout
-entry in `shell.json`, not under `bar.nyxiri`, and the card's Workspaces
-tab edits them while the widget is on the bar. It is optional; Nyxiri
+entry in `shell.json`, not under `bar.nyxiri`, and the window's Workspaces
+tab edits them while the widget is on the bar. The widget also has its own settings popup: right-click any workspace cell to open it, with the same controls and the same config, so it works without the bar too. It is optional; Nyxiri
 works with the stock workspaces widget too.
 
 ## How it works
@@ -281,8 +284,7 @@ palette parsing and colour resolution.
 
 ## Limitations
 
-- The settings card is per bar surface; opening it on another monitor replaces
-  the one already open (the bar only tracks one popout at a time).
+- The settings window is a single window; it opens on the focused monitor.
 - Widget enabling uses `omarchy plugin`, so it affects the whole session, not
   one monitor. Per-monitor visibility is the rule list, not plugin enablement.
 - `omarchy-shell` IPC requires the bar to be loaded; if Nyxiri failed to load,
