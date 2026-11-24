@@ -75,6 +75,29 @@ test("batVisibleOn shows everywhere for all, only the named monitor for a monito
   assert.equal(Nyxiri.batVisibleOn(named, "HDMI-A-1", undefined), true)
 })
 
+test("batVisibleOn hides the bat everywhere when batEnabled is false", () => {
+  const screens = ["DP-1", "HDMI-A-1"]
+  // normalize keeps the flag; omitted or true still shows.
+  assert.equal(Nyxiri.normalize({ batEnabled: false }).batEnabled, false)
+  assert.equal(Nyxiri.normalize({ batEnabled: true }).batEnabled, true)
+  assert.equal(Nyxiri.normalize({}).batEnabled, true)
+  assert.equal(Nyxiri.defaults().batEnabled, true)
+
+  const disabled = Nyxiri.normalize({ batEnabled: false })
+  assert.equal(Nyxiri.batVisibleOn(disabled, "DP-1", screens), false)
+  assert.equal(Nyxiri.batVisibleOn(disabled, "HDMI-A-1", screens), false)
+  // The disable wins over a named scope too: no scope can re-show it.
+  const disabledNamed = Nyxiri.normalize({ batEnabled: false, batScope: "DP-1" }, screens)
+  assert.equal(Nyxiri.batVisibleOn(disabledNamed, "DP-1", screens), false)
+  assert.equal(Nyxiri.batVisibleOn(disabledNamed, "HDMI-A-1", screens), false)
+
+  const enabled = Nyxiri.normalize({ batEnabled: true })
+  assert.equal(Nyxiri.batVisibleOn(enabled, "DP-1", screens), true)
+  assert.equal(Nyxiri.batVisibleOn(enabled, "HDMI-A-1", screens), true)
+  const omitted = Nyxiri.normalize({})
+  assert.equal(Nyxiri.batVisibleOn(omitted, "DP-1", screens), true)
+})
+
 test("normalize rejects non-object input", () => {
   assert.deepEqual(Nyxiri.normalize(null), Nyxiri.defaults())
   assert.deepEqual(Nyxiri.normalize("nope"), Nyxiri.defaults())

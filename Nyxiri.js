@@ -56,6 +56,7 @@ function defaults() {
   return {
     version: 1,
     batScope: "all",
+    batEnabled: true,
     sections: { left: "island", center: "island", right: "island" },
     pill: {
       color: DEFAULT_COLOR,
@@ -134,6 +135,7 @@ function normalize(raw, knownScreens) {
   if (!isPlainObject(raw)) return out
 
   out.batScope = batScopeIn(raw.batScope, knownScreens, out.batScope)
+  if (typeof raw.batEnabled === "boolean") out.batEnabled = raw.batEnabled
 
   var sections = isPlainObject(raw.sections) ? raw.sections : null
   if (sections) {
@@ -244,13 +246,15 @@ function allows(config, screenName, widgetKey) {
   return mode === "only" ? found : !found
 }
 
-// Whether the bat (settings button) shows on a monitor. Scope "all" shows
-// it everywhere; a monitor name shows it only on that monitor. A stored
+// Whether the bat (settings button) shows on a monitor. batEnabled false
+// hides it everywhere; scope "all" shows it everywhere; a monitor name
+// shows it only on that monitor. A stored
 // name that is not currently connected falls back to showing everywhere,
 // so unplugging the chosen monitor never strands the settings behind a
 // bar with no button. With no screen list to check against, a named scope
 // also shows, for the same reason.
 function batVisibleOn(config, screenName, knownScreens) {
+  if (config && config.batEnabled === false) return false
   var scope = config && typeof config.batScope === "string" ? config.batScope : "all"
   if (scope === BAT_SCOPE_ALL) return true
   if (!Array.isArray(knownScreens) || knownScreens.indexOf(scope) === -1) return true

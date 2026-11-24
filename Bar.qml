@@ -2706,7 +2706,7 @@ Item {
     // drives root.showTooltip directly instead of through the plugin API
     // that widget plugins use (their WidgetButton does the same).
     readonly property bool tooltipHovered: batMouse.containsMouse
-    // Hidden by the bat scope setting (Bar tab: a monitor name shows the
+    // Hidden by the bat scope setting (Monitor Bars tab: a monitor name shows the
     // bat only on that monitor). A hidden bat collapses to zero size so the
     // right modules and the island pill close up over it instead of
     // leaving a bat-shaped gap at the bar's end; the pill's right edge

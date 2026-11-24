@@ -815,6 +815,15 @@ test("the Monitor Bars tab has a bat scope setting that writes through writeNyxi
   assert.match(settings, /onClicked: popup\.setBatScope\(modelData\.value\)/)
   assert.doesNotMatch(settings, /\{ value: "main", label: "Main monitor only" \}/)
   assert.match(settings, /function setBatScope\(scope\) \{\n\s+bar\.writeNyxiri\(\{ batScope: scope \}\)\n\s+\}/)
+  // The bat can be hidden entirely, not just scoped to one monitor.
+  // Omitted batEnabled means shown, so the toggle defaults on.
+  assert.match(settings, /function setBatEnabled\(enabled\) \{\n\s+bar\.writeNyxiri\(\{ batEnabled: enabled \}\)\n\s+\}/)
+  assert.match(settings, /label: "Show settings button"/)
+  assert.match(settings, /description: "Hide the bat from every bar\. Settings stay reachable from a terminal: hexciri-shell pizza\.dirty\.nyxiri openSettings"/)
+  assert.match(settings, /checked: popup\.bar\.nyxiri\.batEnabled !== false/)
+  assert.match(settings, /onClicked: popup\.setBatEnabled\(!checked\)/)
+  // The scope row greys out while the bat is hidden.
+  assert.match(settings, /enabled: popup\.bar\.nyxiri\.batEnabled !== false/)
 })
 
 test("the bat button fits inside the bar thickness and its pill follows the right section", () => {
@@ -862,6 +871,12 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   assert.doesNotMatch(bar, /screens\[0\]\.name/)
   assert.match(bar, /function nyxiriBatVisible\(screenName\)/)
   assert.match(bar, /Nyxiri\.batVisibleOn\(nyxiri, screenName, nyxiriScreenNames\(\)\)/)
+  // batEnabled false is an early return in batVisibleOn, before any scope
+  // check, so disabling the bat hides it on every monitor.
+  const nyxiri = read("Nyxiri.js")
+  assert.match(nyxiri, /function batVisibleOn\(config, screenName, knownScreens\) \{\n\s+if \(config && config\.batEnabled === false\) return false/)
+  assert.match(nyxiri, /batEnabled: true/)
+  assert.match(nyxiri, /if \(typeof raw\.batEnabled === "boolean"\) out\.batEnabled = raw\.batEnabled/)
   assert.match(bar, /Nyxiri\.normalize\(barConfig \? barConfig\.nyxiri : null, nyxiriScreenNames\(\)\)/)
   assert.match(bar, /readonly property bool batShown: root\.nyxiriBatVisible\(screenName\)/)
   assert.match(bar, /readonly property real inkShiftX: batSize \* 0\.17/)

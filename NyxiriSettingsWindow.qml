@@ -197,6 +197,10 @@ PanelWindow {
     bar.writeNyxiri({ batScope: scope })
   }
 
+  function setBatEnabled(enabled) {
+    bar.writeNyxiri({ batEnabled: enabled })
+  }
+
   function setPill(patch) {
     bar.writeNyxiri({ pill: patch })
   }
@@ -1941,6 +1945,7 @@ PanelWindow {
                   id: batScopeRow
                   width: parent.width
                   spacing: Style.spacing.xs
+                  enabled: popup.bar.nyxiri.batEnabled !== false
 
                   Repeater {
                     id: batScopeRepeater
@@ -1956,6 +1961,15 @@ PanelWindow {
                       onClicked: popup.setBatScope(modelData.value)
                     }
                   }
+                }
+
+                Toggle {
+                  width: body.width
+                  label: "Show settings button"
+                  description: "Hide the bat from every bar. Settings stay reachable from a terminal: hexciri-shell pizza.dirty.nyxiri openSettings"
+                  checked: popup.bar.nyxiri.batEnabled !== false
+                  foreground: popup.bar.foreground
+                  onClicked: popup.setBatEnabled(!checked)
                 }
               }
             }
