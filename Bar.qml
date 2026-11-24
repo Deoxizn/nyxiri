@@ -163,7 +163,7 @@ Item {
   property bool barHidden: false
   property string home: Quickshell.env("HOME")
   property string stateHome: home + "/.local/state"
-  property string omarchyConfigDir: home + "/.config/omarchy"
+  property string hexciriConfigDir: home + "/.config/hexciri"
   property var fallbackBarConfig: ({
     position: "top",
     background: "opaque",
@@ -1053,7 +1053,7 @@ Item {
     if (look !== "none") glassy = look === "glassy"
     if (look !== glassSyncedLook) {
       glassSyncedLook = look
-      Util.execDetached("omarchy-bar sync-glass")
+      Util.execDetached("hexciri-bar sync-glass")
     }
 
     // Each widget keeps its key while it stays in the layout, wherever it
@@ -1250,7 +1250,7 @@ Item {
   }
 
   function customModuleSource(entry) {
-    var source = BarModel.customModulePath(entry, home, omarchyConfigDir)
+    var source = BarModel.customModulePath(entry, home, hexciriConfigDir)
     return source ? Util.fileUrl(source) : ""
   }
 
@@ -1291,9 +1291,9 @@ Item {
   }
 
   // Steps the bar background from clear to glassy to opaque and around. Through
-  // omarchy-bar, which keeps Hyprland's blur behind a glassy bar in step.
+  // hexciri-bar, which keeps Hyprland's blur behind a glassy bar in step.
   function cycleBackground() {
-    Util.execDetached("omarchy-bar background cycle")
+    Util.execDetached("hexciri-bar background cycle")
   }
 
   function moduleDropAtScene(scenePoint, sourceSlot) {
@@ -1762,7 +1762,7 @@ Item {
     if (!requestedTransparent || transparentForegroundProc.running) return
 
     transparentForegroundProc.command = [
-      "omarchy-bar-text-color",
+      "hexciri-bar-text-color",
       root.position,
       String(root.barSize),
       colorHex(root.themeForeground),
@@ -1884,11 +1884,11 @@ Item {
   Process {
     id: barHiddenProbe
     running: true
-    command: ["bash", "-c", "[[ -f $HOME/.local/state/omarchy/toggles/bar-off ]] && echo yes || echo no"]
+    command: ["bash", "-c", "[[ -f $HOME/.local/state/hexciri/toggles/bar-off ]] && echo yes || echo no"]
     stdout: SplitParser { onRead: function(line) { root.barHidden = String(line).trim() === "yes" } }
   }
   FileView {
-    path: root.home + "/.local/state/omarchy/toggles"
+    path: root.home + "/.local/state/hexciri/toggles"
     watchChanges: true
     printErrors: false
     onFileChanged: barHiddenProbe.running = true
@@ -1899,7 +1899,7 @@ Item {
   // shell restarts. `omarchy-toggle-bar` nudges this after flipping the flag
   // so the probe re-reads it even when the watch has gone quiet.
   ShellIpc {
-    target: "omarchy.bar"
+    target: "hexciri.bar"
 
     // Start rather than restart: a probe already in flight was launched by the
     // directory watch after the flag flipped, so its answer is current, and

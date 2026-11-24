@@ -17,7 +17,7 @@
 # `plugin add` still validates each manifest before installing.
 set -euo pipefail
 
-PLUGINS_DIR=${HOME}/.config/omarchy/plugins
+PLUGINS_DIR=${HOME}/.config/hexciri/plugins
 with_cats=0
 
 usage() {
@@ -112,7 +112,7 @@ migrate_ids() {
   # id changes, the inline settings stay. If shell.json cannot be parsed
   # (it is plain JSON, but be safe), warn and leave it alone rather than
   # failing the install; the widgets fall back to defaults in that case.
-  python3 - "$HOME/.config/omarchy/shell.json" <<'PYEOF' || printf 'install-all: could not re-key shell.json, widget settings may reset to defaults\n'
+  python3 - "$HOME/.config/hexciri/shell.json" <<'PYEOF' || printf 'install-all: could not re-key shell.json, widget settings may reset to defaults\n'
 import json, sys
 path = sys.argv[1]
 mapping = {
@@ -182,7 +182,7 @@ if (( with_cats )); then
   add_plugin pizza.dirty.bongocat https://github.com/Deoxizn/omarchy-bongocat.git
 fi
 
-omarchy-shell shell rescanPlugins >/dev/null || true
+hexciri-shell shell rescanPlugins >/dev/null || true
 
 # Restart the shell now, before the bar use and the puts: the shell only
 # learns the new ids by rescanning, and a restart guarantees it. The
@@ -212,8 +212,8 @@ fi
 # The stock workspaces widget stays in the layout unless it is disabled,
 # so a fresh install shows two workspaces bars: the stock one and this
 # one. Disable it (do not remove it) so it can be re-enabled later from
-# the settings card or with `omarchy plugin enable omarchy.workspaces`.
-omarchy plugin disable omarchy.workspaces ||
+# the settings card or with `hexciri plugin enable hexciri.workspaces`.
+hexciri plugin disable hexciri.workspaces ||
   printf 'install-all: could not disable the stock workspaces widget; disable it in the settings card (Plugins tab)\n'
 
 # Classic workspaces need their Hyprland loader wired up, or the Classic

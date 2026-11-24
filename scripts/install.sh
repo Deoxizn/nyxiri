@@ -16,11 +16,11 @@
 set -euo pipefail
 
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-target=${NYXIRI_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/pizza.dirty.nyxiri}
+target=${NYXIRI_PLUGIN_DIR:-$HOME/.config/hexciri/plugins/pizza.dirty.nyxiri}
 mode=add
 bar_repo=${NYXIRI_REPO:-https://github.com/Deoxizn/nyxiri.git}
 menu_repo=${NYXIRI_MENU_REPO:-https://github.com/Deoxizn/nyxiri-menu.git}
-menu_target=${NYXIRI_MENU_PLUGIN_DIR:-$HOME/.config/omarchy/plugins/pizza.dirty.nyxiri-menu}
+menu_target=${NYXIRI_MENU_PLUGIN_DIR:-$HOME/.config/hexciri/plugins/pizza.dirty.nyxiri-menu}
 install_menu=1
 yes_flags=()
 
@@ -35,8 +35,8 @@ Usage: scripts/install.sh [--add|--clone|--link|--copy] [--no-menu] [--yes] [--t
   --copy   copy the plugin files instead (no .git, so no plugin updates)
   --no-menu  install the bar only, skip the Nyxiri menu
   --yes    pass --yes through to omarchy plugin add/remove (non-interactive)
-  --target DIR    install the bar elsewhere (default ~/.config/omarchy/plugins/pizza.dirty.nyxiri)
-  --menu-target DIR  install the menu elsewhere (default ~/.config/omarchy/plugins/pizza.dirty.nyxiri-menu)
+  --target DIR    install the bar elsewhere (default ~/.config/hexciri/plugins/pizza.dirty.nyxiri)
+  --menu-target DIR  install the menu elsewhere (default ~/.config/hexciri/plugins/pizza.dirty.nyxiri-menu)
 USAGE
 }
 
@@ -57,9 +57,9 @@ done
 
 mkdir -p -- "$(dirname -- "$target")" "$(dirname -- "$menu_target")"
 
-plugins_root=${HOME%/}/.config/omarchy/plugins
+plugins_root=${HOME%/}/.config/hexciri/plugins
 
-# --target must stay inside the Omarchy plugins tree: anything outside it
+# --target must stay inside the Hexciri plugins tree: anything outside it
 # (including $HOME itself or a path smuggled out via ..) is refused, since
 # every mode below does rm -rf on the target first.
 validate_target() {
@@ -159,7 +159,7 @@ else
 fi
 
 printf '\nNext:\n'
-printf '  omarchy-shell shell rescanPlugins\n'
+printf '  hexciri-shell shell rescanPlugins\n'
 printf '  omarchy bar use pizza.dirty.nyxiri\n'
 if (( install_menu )); then
   printf '  omarchy bar put pizza.dirty.nyxiri-menu\n'

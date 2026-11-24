@@ -885,3 +885,47 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   assert.match(bar, /anchors\.verticalCenterOffset: root\.vertical \? -inkShiftX : inkShiftY/)
   assert.match(bar, /rotation: root\.vertical \? 90 : 0/)
 })
+
+test("Hexciri paths and binaries: no hardcoded Omarchy plugin/state dirs or omarchy-* helpers", () => {
+  const bar = read("Bar.qml")
+  const settings = read("NyxiriSettingsWindow.qml")
+  const installAll = read("scripts/install-all.sh")
+  const install = read("scripts/install.sh")
+  // A1: plugin dir is ~/.config/hexciri/plugins, never ~/.config/omarchy/plugins.
+  assert.match(settings, /\.config\/hexciri\/plugins\/pizza\.dirty\.nyxiri\/scripts\/write-calendars\.py/)
+  assert.match(settings, /\.config\/hexciri\/plugins\/pizza\.dirty\.nyxiri-workspaces\/bin\/mode/)
+  assert.match(installAll, /PLUGINS_DIR=\$\{HOME\}\/\.config\/hexciri\/plugins/)
+  assert.match(installAll, /\$HOME\/\.config\/hexciri\/shell\.json/)
+  assert.match(install, /target=\$\{NYXIRI_PLUGIN_DIR:-\$HOME\/\.config\/hexciri\/plugins\/pizza\.dirty\.nyxiri\}/)
+  assert.match(install, /menu_target=\$\{NYXIRI_MENU_PLUGIN_DIR:-\$HOME\/\.config\/hexciri\/plugins\/pizza\.dirty\.nyxiri-menu\}/)
+  assert.match(install, /plugins_root=\$\{HOME%\/\}\/\.config\/hexciri\/plugins/)
+  assert.match(bar, /hexciriConfigDir: home \+ "\/\.config\/hexciri"/)
+  assert.doesNotMatch(bar, /\.config\/omarchy/)
+  assert.doesNotMatch(settings, /\.config\/omarchy\/plugins/)
+  assert.doesNotMatch(installAll, /\.config\/omarchy/)
+  assert.doesNotMatch(install, /\.config\/omarchy/)
+  // A2: bar-hidden state lives under ~/.local/state/hexciri/toggles.
+  // (state/omarchy/current/theme stays: per-file symlinks exist for current/ only.)
+  assert.match(bar, /\.local\/state\/hexciri\/toggles\/bar-off/)
+  assert.match(bar, /path: root\.home \+ "\/\.local\/state\/hexciri\/toggles"/)
+  assert.doesNotMatch(bar, /\.local\/state\/omarchy\/toggles/)
+  // A3: hexciri-* helper binaries (the fork renames omarchy-* -> hexciri-*).
+  assert.match(bar, /hexciri-bar sync-glass/)
+  assert.match(bar, /hexciri-bar background cycle/)
+  assert.match(bar, /"hexciri-bar-text-color"/)
+  assert.match(installAll, /hexciri-shell shell rescanPlugins/)
+  assert.match(install, /hexciri-shell shell rescanPlugins/)
+  assert.doesNotMatch(bar, /Util\.execDetached\("omarchy-bar/)
+  assert.doesNotMatch(bar, /"omarchy-bar-text-color"/)
+  assert.doesNotMatch(installAll, /omarchy-shell/)
+  assert.doesNotMatch(install, /omarchy-shell/)
+  // A4: the bar-hidden IPC nudge targets the Hexciri stock bar id.
+  assert.match(bar, /target: "hexciri\.bar"/)
+  assert.doesNotMatch(bar, /target: "omarchy\.bar"/)
+  // A5: stock workspaces is disabled by its Hexciri id. The compat alias
+  // tables are only consulted by code calling resolve_plugin, and nothing
+  // shows the hexciri plugin CLI resolving legacy ids, so the legacy id
+  // must not be passed here.
+  assert.match(installAll, /hexciri plugin disable hexciri\.workspaces/)
+  assert.doesNotMatch(installAll, /omarchy\.workspaces/)
+})

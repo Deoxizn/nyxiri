@@ -272,7 +272,7 @@ PanelWindow {
   // the links are secret, so the tab masks them like a password field
   // and only reveals one when its eye toggle is tapped.
   readonly property string calendarsPath: (Quickshell.env("HOME") || "") + "/.config/pizza.dirty.clock/calendars.json"
-  readonly property string calendarsScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/pizza.dirty.nyxiri/scripts/write-calendars.py"
+  readonly property string calendarsScript: (Quickshell.env("HOME") || "") + "/.config/hexciri/plugins/pizza.dirty.nyxiri/scripts/write-calendars.py"
   property var calendars: []
   property var calendarsBeforeSave: []
   property string calendarsStatus: ""
@@ -347,7 +347,7 @@ PanelWindow {
   // The mode is Hyprland state, not a widget setting, so the card asks the
   // script instead of reading the layout entry. The script runs through
   // bash: pushes land mode 644, so it never runs directly.
-  readonly property string classicModeScript: (Quickshell.env("HOME") || "") + "/.config/omarchy/plugins/pizza.dirty.nyxiri-workspaces/bin/mode"
+  readonly property string classicModeScript: (Quickshell.env("HOME") || "") + "/.config/hexciri/plugins/pizza.dirty.nyxiri-workspaces/bin/mode"
   property bool classicMode: false
   property bool classicModeKnown: false
   property bool classicSwitching: false
