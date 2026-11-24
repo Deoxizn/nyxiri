@@ -3416,7 +3416,14 @@ Item {
     // centerBegin looks like one on center. The tray's nested list is not a
     // bar section and never gets a pill.
     readonly property string pillSection: region === "centerBegin" || region === "centerEnd" ? "center" : region
-    readonly property bool miniPillShown: ["left", "right", "center"].indexOf(region) !== -1
+    // The gate checks pillSection, not region: centerBegin/centerEnd
+    // fold into "center", so a mini pill shows for every widget of a
+    // section whose mode is mini, whichever of the center's three
+    // regions it sits in. Checking region here left centerBegin and
+    // centerEnd widgets -- the clock and weather on a Nyxiri install,
+    // which puts both in centerEnd -- with no mini pill at all, while
+    // island mode still showed the union pill around them.
+    readonly property bool miniPillShown: ["left", "right", "center"].indexOf(pillSection) !== -1
       && root.nyxiriSectionMode(pillSection) === "mini"
     // NYXIRI-END nyxiri-mini
     readonly property bool panelOpen: root.activePopout === slot.activeItem

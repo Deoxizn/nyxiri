@@ -929,3 +929,20 @@ test("Hexciri paths and binaries: no hardcoded Omarchy plugin/state dirs or omar
   assert.match(installAll, /hexciri plugin disable hexciri\.workspaces/)
   assert.doesNotMatch(installAll, /omarchy\.workspaces/)
 })
+
+test("mini pill shows for every region of a section in mini mode, including the center's hanging regions", () => {
+  const bar = read("Bar.qml")
+  // The center's three regions share one section style: centerBegin and
+  // centerEnd fold into "center" (pillSection), and the island pill
+  // already spans all three. The mini gate must use that folded section,
+  // not the raw region: the installer puts both the clock and the weather
+  // in centerEnd, so gating on region left them with no mini pill at all
+  // while island mode still showed the union pill around them.
+  assert.match(bar, /\["left", "right", "center"\]\.indexOf\(pillSection\) !== -1/)
+  assert.doesNotMatch(bar, /\["left", "right", "center"\]\.indexOf\(region\) !== -1/)
+  // The gate still requires the section's mode to be mini, and the tray's
+  // nested list still never gets a pill (its pillSection is "tray", which
+  // is not in the list).
+  assert.match(bar, /miniPillShown: \["left", "right", "center"\]\.indexOf\(pillSection\) !== -1\n\s+&& root\.nyxiriSectionMode\(pillSection\) === "mini"/)
+  assert.match(bar, /visible: slot\.miniPillShown && slot\.widgetWidth > 0 && slot\.widgetHeight > 0/)
+})
