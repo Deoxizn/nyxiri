@@ -3,18 +3,22 @@
 # Core plugins are always installed; the cat widgets (cpurr and Bongo Cat)
 # are opt-in with --with-cats.
 #
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh)
-#   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh) --with-cats
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/nyx/scripts/install-all.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/nyx/scripts/install-all.sh) --with-cats
 #
 # Fish has no process substitution, so wrap it:
-#   bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/main/scripts/install-all.sh) --with-cats'
+#   bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/Deoxizn/nyxiri/nyx/scripts/install-all.sh) --with-cats'
+#
+# Hexciri only (nyx branch). hexciri plugin add has NO --branch flag,
+# so nyx installs go via git clone --branch nyx + hexciri plugin enable.
 #
 # Already-installed plugins are skipped, never removed or re-added, so
 # re-running the installer is safe. Widgets already on the bar are left
-# where they are (`omarchy bar put` only adds a widget that is not on
-# the bar yet). Everything goes through `omarchy plugin add --enable
-# --yes`, so no prompts: the installer trusts Deoxizn's repos, and
-# `plugin add` still validates each manifest before installing.
+# where they are (`hexciri bar put` only adds a widget that is not on
+# the bar yet). Everything goes through `git clone --branch nyx` +
+# `hexciri-plugin-validate` + `hexciri plugin enable`, so no prompts:
+# the installer trusts Deoxizn's repos, and validate still checks each
+# manifest before installing.
 set -euo pipefail
 
 PLUGINS_DIR=${HOME}/.config/hexciri/plugins
@@ -36,10 +40,12 @@ while (( $# > 0 )); do
   esac
 done
 
-command -v omarchy >/dev/null 2>&1 || {
-  printf 'install-all: omarchy is not on PATH\n' >&2
+command -v hexciri >/dev/null 2>&1 || {
+  printf 'install-all: hexciri is not on PATH\n' >&2
   exit 1
 }
+_validate="/usr/share/hexciri/bin/hexciri-plugin-validate"
+[ -x "$_validate" ] || _validate="hexciri-plugin-validate"
 
 # Rename plugins installed under the old devi.*/deoxizn.* ids to the new
 # pizza.dirty.* ids, and carry their settings across. No reinstall: the
@@ -164,8 +170,10 @@ add_plugin() {
     printf '%s: already installed, skipping\n' "$id"
     return 0
   fi
-  printf '%s: installing from %s\n' "$id" "$url"
-  omarchy plugin add "$url" --enable --yes
+  printf '%s: installing from %s (nyx)\n' "$id" "$url"
+  git clone --branch nyx -- "$url" "$PLUGINS_DIR/$id" || { printf '%s: git clone failed\n' "$id" >&2; return 1; }
+  "$_validate" "$PLUGINS_DIR/$id" || { printf '%s: manifest validation failed\n' "$id" >&2; rm -rf "$PLUGINS_DIR/$id"; return 1; }
+  hexciri plugin enable "$id" || printf '%s: cloned but not enabled (shell not running, enable happens on first shell start)\n' "$id"
 }
 
 # Core: the bar and the widgets that belong to it.
@@ -187,8 +195,8 @@ hexciri-shell shell rescanPlugins >/dev/null || true
 # Restart the shell now, before the bar use and the puts: the shell only
 # learns the new ids by rescanning, and a restart guarantees it. The
 # puts retry while the shell comes back up.
-omarchy restart shell
-omarchy bar use pizza.dirty.nyxiri
+hexciri restart shell
+hexciri bar use pizza.dirty.nyxiri
 
 # Place the widgets. Menu first, then workspaces, so the trigger glyph
 # sits before the workspace numbers on the left. A put that fails (the
@@ -196,7 +204,7 @@ omarchy bar use pizza.dirty.nyxiri
 # note instead of failing the install; enable it in the settings card
 # and put it on the bar from there.
 put() {
-  omarchy bar put "$1" --section "$2" ||
+  hexciri bar put "$1" --section "$2" ||
     printf '%s: could not put on the bar; enable it in the settings card and add it from there\n' "$1"
 }
 put pizza.dirty.nyxiri-menu left
