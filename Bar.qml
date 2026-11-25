@@ -2676,8 +2676,30 @@ Item {
     property int borderWidth: root.nyxiri.pill.borderWidth
     property real cornerRadius: root.nyxiri.pill.radius
 
-    color: Util.alpha(pillColor, fillOpacity)
-    borderSpec: Border.flat(Util.alpha(pillColor, borderOpacity), borderWidth)
+    // A translucent fill composites over the wallpaper, so the same pill
+    // read as far more transparent over a bright patch of wallpaper than
+    // over a dark one: the workspaces section sits over the bright planet
+    // and looked washed out next to the menu and clock pills over dark
+    // space, at the same 73% fill. Pre-mixing the fill (and border)
+    // against the bar surface makes every pill render identically
+    // wherever it sits, and identical to how the pills already look over
+    // dark wallpaper. Clear surface (or a transparent bar) keeps the old
+    // translucent fill: there is no strip there, and seeing the wallpaper
+    // through the pill is the point.
+    readonly property bool solidFill: !root.transparent && !root.nyxiriClearSurface
+    readonly property color fillColor: solidFill ? Qt.rgba(
+        pillColor.r * fillOpacity + root.background.r * (1 - fillOpacity),
+        pillColor.g * fillOpacity + root.background.g * (1 - fillOpacity),
+        pillColor.b * fillOpacity + root.background.b * (1 - fillOpacity), 1)
+      : Util.alpha(pillColor, fillOpacity)
+    readonly property color edgeColor: solidFill ? Qt.rgba(
+        pillColor.r * borderOpacity + root.background.r * (1 - borderOpacity),
+        pillColor.g * borderOpacity + root.background.g * (1 - borderOpacity),
+        pillColor.b * borderOpacity + root.background.b * (1 - borderOpacity), 1)
+      : Util.alpha(pillColor, borderOpacity)
+
+    color: fillColor
+    borderSpec: Border.flat(edgeColor, borderWidth)
     radius: cornerRadius >= 999
       ? Math.max(0, Math.min(width, height) / 2)
       : Math.max(0, Math.min(cornerRadius, Math.min(width, height) / 2))

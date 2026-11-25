@@ -72,8 +72,19 @@ test("the pill opacity slider is the fill level itself, so 100% means solid", ()
   assert.match(settings, /component SliderRow: Column/)
   assert.doesNotMatch(settings, /pill\.opacity/)
   const bar = read("Bar.qml")
-  assert.match(bar, /color: Util\.alpha\(pillColor, fillOpacity\)/)
-  assert.match(bar, /Border\.flat\(Util\.alpha\(pillColor, borderOpacity\), borderWidth\)/)
+  // The fill is pre-mixed against the bar surface instead of drawn
+  // translucent over the wallpaper, so a pill over a bright patch of
+  // wallpaper renders the same as one over dark wallpaper (the
+  // workspaces section over the bright planet read as far more
+  // transparent than the menu/clock pills at the same fill). At 100%
+  // the mix is the pill color itself, so 100% still means solid.
+  assert.match(bar, /pillColor\.r \* fillOpacity \+ root\.background\.r/)
+  assert.match(bar, /color: fillColor/)
+  assert.match(bar, /Border\.flat\(edgeColor, borderWidth\)/)
+  // Clear surface (or a transparent bar) keeps the translucent fill:
+  // there is no strip there, seeing the wallpaper is the point.
+  assert.match(bar, /solidFill: !root\.transparent && !root\.nyxiriClearSurface/)
+  assert.match(bar, /Util\.alpha\(pillColor, fillOpacity\)/)
   assert.doesNotMatch(bar, /masterOpacity/)
 })
 
