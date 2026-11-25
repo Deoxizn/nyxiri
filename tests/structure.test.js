@@ -886,6 +886,28 @@ test("the bat button fits inside the bar thickness and its pill follows the righ
   assert.match(bar, /rotation: root\.vertical \? 90 : 0/)
 })
 
+test("a hidden bat leaves no pill behind on its monitor", () => {
+  const bar = read("Bar.qml")
+  // Regression, HDMI 2026-11-24: bat scope DP-4 (or batEnabled false)
+  // hid the glyph, but the right island pill still drew a 16px empty
+  // pill at the bar's far right edge. Its width was unconditional,
+  // (batButton.x + batButton.width) - rightModules.x, and a hidden bat
+  // still anchors at the right edge with width 0 while an empty
+  // RightModules (width 0, anchored to batButton.left) sits 4px left
+  // of it: 4 + padding*2 of empty pill, no widgets inside.
+  // The island pill must not render at all when the section is empty
+  // and the bat is hidden, and must end at the widgets, not at the
+  // bat's old position, when the bat is hidden but widgets exist.
+  assert.match(bar, /visible: root\.nyxiriSectionMode\("right"\) === "island"\n\s+&& \(rightModules\.visible \|\| batButton\.batShown\)/)
+  assert.match(bar, /width: batButton\.batShown\n\s+\? \(batButton\.x \+ batButton\.width\) - rightModules\.x \+ root\.nyxiri\.pill\.padding \* 2\n\s+: rightModules\.width \+ root\.nyxiri\.pill\.padding \* 2/)
+  assert.match(bar, /height: batButton\.batShown\n\s+\? \(batButton\.y \+ batButton\.height\) - rightModules\.y \+ root\.nyxiri\.pill\.padding \* 2\n\s+: rightModules\.height \+ root\.nyxiri\.pill\.padding \* 2/)
+  // The bat's own mini-mode pill, glyph and click area are gated on
+  // batShown too, not just on the section mode / parent visibility.
+  assert.match(bar, /visible: batShown && root\.nyxiriSectionMode\("right"\) !== "island"/)
+  // Shown-bat geometry is unchanged.
+  assert.match(bar, /visible: batShown\n\n\s+implicitWidth: !batShown \? 0 : \(root\.vertical \? batSize : batLength\)/)
+})
+
 test("Hexciri paths and binaries: no hardcoded Omarchy plugin/state dirs or omarchy-* helpers", () => {
   const bar = read("Bar.qml")
   const settings = read("NyxiriSettingsWindow.qml")

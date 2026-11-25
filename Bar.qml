@@ -2253,11 +2253,19 @@ Item {
           height: barWindow.thickness - root.nyxiri.pill.inset * 2
         }
 
+        // A hidden bat must leave no pill behind: with no right widgets
+        // and no bat, an unconditional width here drew a 16px empty pill
+        // at the bar's right edge (the bat's old spot, HDMI 2026-11-24).
+        // With widgets but no bat, the pill ends at the widgets, not at
+        // the bat's anchored position.
         NyxiriPill {
           visible: root.nyxiriSectionMode("right") === "island"
+            && (rightModules.visible || batButton.batShown)
           x: rightModules.x - root.nyxiri.pill.padding
           y: Math.round((barWindow.thickness - height) / 2)
-          width: (batButton.x + batButton.width) - rightModules.x + root.nyxiri.pill.padding * 2
+          width: batButton.batShown
+            ? (batButton.x + batButton.width) - rightModules.x + root.nyxiri.pill.padding * 2
+            : rightModules.width + root.nyxiri.pill.padding * 2
           height: barWindow.thickness - root.nyxiri.pill.inset * 2
         }
         // NYXIRI-END nyxiri-islands-horizontal
@@ -2345,12 +2353,17 @@ Item {
           height: leftModules.height + root.nyxiri.pill.padding * 2
         }
 
+        // See the horizontal pill above: no empty pill at the bat's
+        // old spot when the bat is hidden and the section is empty.
         NyxiriPill {
           visible: root.nyxiriSectionMode("right") === "island"
+            && (rightModules.visible || batButton.batShown)
           x: Math.round((barWindow.thickness - width) / 2)
           y: rightModules.y - root.nyxiri.pill.padding
           width: barWindow.thickness - root.nyxiri.pill.inset * 2
-          height: (batButton.y + batButton.height) - rightModules.y + root.nyxiri.pill.padding * 2
+          height: batButton.batShown
+            ? (batButton.y + batButton.height) - rightModules.y + root.nyxiri.pill.padding * 2
+            : rightModules.height + root.nyxiri.pill.padding * 2
         }
         // NYXIRI-END nyxiri-islands-vertical
 
@@ -2707,11 +2720,10 @@ Item {
     // that widget plugins use (their WidgetButton does the same).
     readonly property bool tooltipHovered: batMouse.containsMouse
     // Hidden by the bat scope setting (Monitor Bars tab: a monitor name shows the
-    // bat only on that monitor). A hidden bat collapses to zero size so the
-    // right modules and the island pill close up over it instead of
-    // leaving a bat-shaped gap at the bar's end; the pill's right edge
-    // lands in the same place either way, since the bat is anchored to
-    // the bar's edge with a fixed margin.
+    // bat only on that monitor) or by batEnabled. A hidden bat collapses to zero size so the
+    // right modules close up over it; the island pill is gated separately
+    // (see the right island pills) so it does not draw an empty pill at
+    // the bat's old spot when the section has no widgets either.
     readonly property bool batShown: root.nyxiriBatVisible(screenName)
     visible: batShown
 
@@ -2720,10 +2732,14 @@ Item {
 
     NyxiriPill {
       anchors.fill: parent
-      visible: root.nyxiriSectionMode("right") !== "island"
+      // Gated on batShown as well as the mode: a hidden bat must not
+      // leave its own pill behind if the parent's visibility is ever
+      // bypassed; the island pill above is gated the same way.
+      visible: batShown && root.nyxiriSectionMode("right") !== "island"
     }
 
     Text {
+      visible: batShown
       anchors.centerIn: parent
       // Horizontal bar: shift left by the ink overhang so the wingspan is
       // centred in the button, and down by the visual-mass offset so the
@@ -2747,6 +2763,7 @@ Item {
 
     MouseArea {
       id: batMouse
+      visible: batShown
       anchors.fill: parent
       hoverEnabled: true
       onEntered: root.showTooltip(parent, "Nyxiri Settings")
